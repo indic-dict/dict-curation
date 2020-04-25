@@ -62,8 +62,6 @@ class DatukParser:
             yield entry
 
 s = str.split
-if sys.version_info < (3, 0):
-    s = unicode.split
 
 '''
 modded xliteration schemes should be defined., to address short 'e, o', and malayalam specific റ, ഴ, etc.

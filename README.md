@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/sanskrit-coders/dict_curation.svg?branch=master)](https://travis-ci.org/sanskrit-coders/dict_curation)
 [![Documentation Status](https://readthedocs.org/projects/dict_curation/badge/?version=latest)](http://dict_curation.readthedocs.io/en/latest/?badge=latest)
 
-## doc curation
+## dict curation
 
 A package for curating doc file collections. Prominent features:
 

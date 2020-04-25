@@ -17,9 +17,9 @@ for line in sys.stdin:
     head2 = regex.sub("म्$", "", head2, flags=regex.UNICODE)
     headwords = list(set([head, head2]))
     headwords = filter(lambda headword : headword != "", headwords)
-    print "|".join(headwords) + "\n" + value.strip() + "\n"
+    print ("|".join(headwords) + "\n" + value.strip() + "\n")
   except ValueError:
-    print line
+    print (line)
     break
    
 
