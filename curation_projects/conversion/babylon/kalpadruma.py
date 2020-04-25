@@ -10,5 +10,5 @@ test_lines = ["अघ अघ त् क तत्कृतौ . इति कव
 for line in sys.stdin:
 # for line in test_lines:
   headwords, value = line.split("\t&&\t")
-  print headwords + "\n" + value.strip() + "\n"
+  print( headwords + "\n" + value.strip() + "\n")
 
