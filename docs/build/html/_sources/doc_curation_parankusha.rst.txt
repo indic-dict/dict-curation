@@ -1,0 +1,8 @@
+dict_curation.parankusha
+========================================
+
+.. automodule:: dict_curation.parankusha
+	:members:
+	:undoc-members:
+		:show-inheritance:
+

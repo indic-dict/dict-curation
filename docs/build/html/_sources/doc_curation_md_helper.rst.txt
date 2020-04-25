@@ -1,0 +1,8 @@
+dict_curation.md_helper
+========================================
+
+.. automodule:: dict_curation.md_helper
+	:members:
+	:undoc-members:
+		:show-inheritance:
+

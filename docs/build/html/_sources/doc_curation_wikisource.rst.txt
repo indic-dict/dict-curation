@@ -1,0 +1,8 @@
+dict_curation.wikisource
+========================================
+
+.. automodule:: dict_curation.wikisource
+	:members:
+	:undoc-members:
+		:show-inheritance:
+

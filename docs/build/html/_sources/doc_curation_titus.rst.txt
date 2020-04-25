@@ -1,0 +1,8 @@
+dict_curation.titus
+========================================
+
+.. automodule:: dict_curation.titus
+	:members:
+	:undoc-members:
+		:show-inheritance:
+

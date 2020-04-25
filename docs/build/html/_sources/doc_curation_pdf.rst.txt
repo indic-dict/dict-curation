@@ -1,0 +1,8 @@
+dict_curation.pdf
+========================================
+
+.. automodule:: dict_curation.pdf
+	:members:
+	:undoc-members:
+		:show-inheritance:
+
