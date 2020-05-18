@@ -26,11 +26,11 @@ def from_combined_source(dict_id, out_path):
 
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with codecs.open(out_path, "w", 'utf-8') as file_out:
-        process_file(csv_in="/home/vvasuki/indic-dict/stardict-pali/dictionary_sources/dict_words_1.csv")
-        process_file(csv_in="/home/vvasuki/indic-dict/stardict-pali/dictionary_sources/dict_words_2.csv")
+        process_file(csv_in="/home/vvasuki/paali-bhaasaa/raw_etexts/kosha/dict_words_1.csv")
+        process_file(csv_in="/home/vvasuki/paali-bhaasaa/raw_etexts/kosha/dict_words_2.csv")
     babylon.transliterate_headword(file_path=out_path, dry_run=False)
 
 
 if __name__ == '__main__':
     # babylon.transliterate_headword(file_path="/home/vvasuki/indic-dict/stardict-pali/pali-head/pts_pali/pts_pali.babylon", dry_run=False)
-    from_combined_source(dict_id="O", out_path="/home/vvasuki/indic-dict/stardict-pali/pali-head/br-entries/roots/roots.babylon")
+    from_combined_source(dict_id="C", out_path="/home/vvasuki/indic-dict/stardict-pali/pali-head/en-entries/concise-buddhadatta/concise-buddhadatta.babylon")
