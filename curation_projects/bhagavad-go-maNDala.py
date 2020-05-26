@@ -54,7 +54,8 @@ def get_letter_headwords(letter, out_path_dir):
 def get_headwords(out_path):
     pool = Pool(4)
     f = partial(get_letter_headwords, out_path_dir=out_path)
-    pool.map(f, letters)
+    counts = pool.map(f, letters)
+    logging.info(zip(letters, counts))
 
 
 def get_definition(headword, browser):
@@ -71,11 +72,17 @@ def get_definition(headword, browser):
     return definition.replace(":", "ઃ")
 
 
-def dump_definitions(in_path, out_path, out_path_devanagari_entries):
+def dump_letter_definitions(letter, in_path_dir, out_path_dir, out_path_dir_devanagari):
+    browser = scraping.get_selenium_browser(headless=True)
+    in_path = os.path.join(in_path_dir, letter + ".csv")
+    out_path = os.path.join(out_path_dir, letter + ".babylon")
+    out_path_devanagari_entries = os.path.join(out_path_dir_devanagari, letter + ".babylon")
+    if os.path.exists(out_path):
+        logging.warning("Skipping %s since %s exists", letter, out_path)
+    
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     os.makedirs(os.path.dirname(out_path_devanagari_entries), exist_ok=True)
-    browser = scraping.get_selenium_browser(headless=True)
-
+    count = 0
     with codecs.open(in_path, "r", 'utf-8') as file_in, codecs.open(out_path, "w", 'utf-8') as file_out, codecs.open(out_path_devanagari_entries, "w", 'utf-8') as file_out_devanagari:
         while True:
             headword = file_in.readline()
@@ -87,8 +94,18 @@ def dump_definitions(in_path, out_path, out_path_devanagari_entries):
             definition_devanagari = sanscript.transliterate(data=definition, _from=sanscript.GUJARATI, _to=sanscript.DEVANAGARI)
             file_out.writelines(["%s|%s\n%s\n\n" % (headword, devanagari_headword, definition)])
             file_out_devanagari.writelines(["%s|%s\n%s\n\n" % (headword, devanagari_headword, definition_devanagari)])
+            count = count + 1
+    browser.close()
+    return count
+
+
+def dump_definitions(in_path_dir, out_path_dir, out_path_dir_devanagari):
+    pool = Pool(4)
+    f = partial(dump_letter_definitions, in_path_dir=in_path_dir, out_path_dir=out_path_dir, out_path_dir_devanagari=out_path_dir_devanagari)
+    results = pool.map(f, letters)
+    logging.info(zip(letters, results))
 
 
 if __name__ == '__main__':
     get_headwords(out_path="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/bhagavad-go-maNDala/mUlam/")
-    # dump_definitions(in_path="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/bhagavad-go-maNDala/mUlam/headwords.csv", out_path="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala/bhagavad-go-maNDala.babylon", out_path_devanagari_entries="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/dev-entries/bhagavad-go-maNDala/bhagavad-go-maNDala.babylon")
+    dump_definitions(in_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/bhagavad-go-maNDala/mUlam/", out_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala/mUlam/", out_path_dir_devanagari="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/dev-entries/bhagavad-go-maNDala/mUlam/")
