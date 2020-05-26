@@ -103,9 +103,9 @@ def dump_letter_definitions(letter, in_path_dir, out_path_dir, out_path_dir_deva
 
 
 def dump_definitions(in_path_dir, out_path_dir, out_path_dir_devanagari):
-    pool = Pool(4)
+    from tqdm.contrib.concurrent import process_map  # or thread_map
     f = partial(dump_letter_definitions, in_path_dir=in_path_dir, out_path_dir=out_path_dir, out_path_dir_devanagari=out_path_dir_devanagari)
-    results = pool.map(f, letters)
+    results = process_map(f, letters, max_workers=4)
     logging.info(zip(letters, results))
 
 
