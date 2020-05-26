@@ -2,6 +2,7 @@ import codecs
 import logging
 import os
 
+from indic_transliteration import sanscript
 from selenium.webdriver.support.select import Select
 
 from curation_utils import scraping
@@ -29,7 +30,7 @@ def get_letter_headwords(letter, file_out):
     browser.implicitly_wait(500)
 
     for option_index in range(1, len(page_options)+1):
-        logging.info("Page %d", option_index)
+        logging.info("Page %s %d", letter, option_index)
         page_dropdown = browser.find_element_by_name("pgInd")
         word_elements = browser.find_elements_by_css_selector("a.word")
         words = [w.text for w in word_elements]
@@ -44,5 +45,37 @@ def get_headwords(out_path):
             get_letter_headwords(letter=letter, file_out=file_out)
 
 
+def get_definition(headword):
+    url = "http://www.bhagavadgomandal.com/index.php?action=dictionary&sitem=%s&type=3&page=0" % headword
+    browser.get(url=url)
+    for detail_link in browser.find_elements_by_css_selector("a.detaillink"):
+        detail_link.click()
+    rows = browser.find_elements_by_css_selector("div.right_middle tr")
+    definition = ""
+    for row in rows:
+        column_data = [c.text for c in row.find_elements_by_css_selector("td")]
+        row_definition = " ".join(column_data[0:2]) + "<br><br>" + column_data[3].replace("\n", "<br>")
+        definition = definition + row_definition + "<br><br>"
+    return definition.replace(":", "ઃ")
+
+
+def dump_definitions(in_path, out_path, out_path_devanagari_entries):
+    os.makedirs(os.path.dirname(out_path))
+    os.makedirs(os.path.dirname(out_path_devanagari_entries))
+
+    with codecs.open(in_path, "r", 'utf-8') as file_in, codecs.open(out_path, "w", 'utf-8') as file_out, codecs.open(out_path_devanagari_entries, "w", 'utf-8') as file_out_devanagari:
+        while True:
+            headword = file_in.readline()
+            if not headword:
+                break
+            headword = headword.strip().replace(":", "ઃ")
+            devanagari_headword = sanscript.transliterate(data=headword, _from=sanscript.GUJARATI, _to=sanscript.DEVANAGARI)
+            definition = get_definition(headword=headword)
+            definition_devanagari = sanscript.transliterate(data=definition, _from=sanscript.GUJARATI, _to=sanscript.DEVANAGARI)
+            file_out.writelines(["%s|%s\n%s\n\n" % (headword, devanagari_headword, definition)])
+            file_out_devanagari.writelines(["%s|%s\n%s\n\n" % (headword, devanagari_headword, definition_devanagari)])
+
+
 if __name__ == '__main__':
-    get_headwords(out_path="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/bhagavad-go-maNDala/mUlam/headwords.csv")
+    # get_headwords(out_path="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/bhagavad-go-maNDala/mUlam/headwords.csv")
+    dump_definitions(in_path="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/bhagavad-go-maNDala/mUlam/headwords.csv", out_path="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala/bhagavad-go-maNDala.babylon", out_path_devanagari_entries="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/dev-entries/bhagavad-go-maNDala/bhagavad-go-maNDala.babylon")
