@@ -40,7 +40,8 @@ def get_letter_headwords(letter, out_path_dir):
         word_count = 0 
         for option_index in range(0, len(page_options)):
             Select(page_dropdown).select_by_index(option_index)
-            logging.info("Page %s %d", letter, option_index)
+            if word_count % 10 == 0:
+                logging.info("Page %s, index %d", letter, option_index)
             page_dropdown = browser.find_element_by_name("pgInd")
             word_elements = browser.find_elements_by_css_selector("a.word")
             words = [w.text for w in word_elements]
@@ -88,9 +89,11 @@ def dump_letter_definitions(letter, in_path_dir, out_path_dir, out_path_dir_deva
             headword = file_in.readline()
             if not headword:
                 break
+            if count % 10 == 0:
+                logging.info("Letter: %s, count: %d, headword: %s", letter, count, headword)
+            definition = get_definition(headword=headword, browser=browser)
             headword = headword.strip().replace(":", "ઃ")
             devanagari_headword = sanscript.transliterate(data=headword, _from=sanscript.GUJARATI, _to=sanscript.DEVANAGARI)
-            definition = get_definition(headword=headword, browser=browser)
             definition_devanagari = sanscript.transliterate(data=definition, _from=sanscript.GUJARATI, _to=sanscript.DEVANAGARI)
             file_out.writelines(["%s|%s\n%s\n\n" % (headword, devanagari_headword, definition)])
             file_out_devanagari.writelines(["%s|%s\n%s\n\n" % (headword, devanagari_headword, definition_devanagari)])
