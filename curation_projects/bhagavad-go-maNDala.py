@@ -4,7 +4,9 @@ import os
 from functools import partial
 from multiprocessing import Pool
 
+import tqdm
 from indic_transliteration import sanscript
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.select import Select
 
 from curation_utils import scraping
@@ -32,17 +34,23 @@ def get_letter_headwords(letter, out_path_dir):
         url = "http://www.bhagwadgomandal.com/index.php?action=dictionary&sitem=%s&type=1&page=0" % letter
         logging.info("Processing %s", letter)
         browser.get(url=url)
-        page_dropdown = browser.find_element_by_name("pgInd")
-        page_options = list(page_dropdown.find_elements_by_css_selector("option"))
-        logging.info("Number of pages: %d", len(page_options))
+        page_dropdown = None
+        num_pages = 1
+        try:
+            page_dropdown = browser.find_element_by_name("pgInd")
+            num_pages = len(page_dropdown.find_elements_by_css_selector("option"))
+        except NoSuchElementException:
+            logging.warning("Got no pages for %s", letter)
+        logging.info("Number of pages: %d for %s", num_pages, letter)
         browser.implicitly_wait(250)
     
         word_count = 0 
-        for option_index in range(0, len(page_options)):
-            Select(page_dropdown).select_by_index(option_index)
+        for option_index in range(0, num_pages):
+            if page_dropdown is not None:
+                Select(page_dropdown).select_by_index(option_index)
+                page_dropdown = browser.find_element_by_name("pgInd")
             if word_count % 10 == 0:
                 logging.info("Page %s, index %d", letter, option_index)
-            page_dropdown = browser.find_element_by_name("pgInd")
             word_elements = browser.find_elements_by_css_selector("a.word")
             words = [w.text for w in word_elements]
             word_count = word_count + len(words)
@@ -85,18 +93,19 @@ def dump_letter_definitions(letter, in_path_dir, out_path_dir, out_path_dir_deva
     os.makedirs(os.path.dirname(out_path_devanagari_entries), exist_ok=True)
     count = 0
     with codecs.open(in_path, "r", 'utf-8') as file_in, codecs.open(out_path, "w", 'utf-8') as file_out, codecs.open(out_path_devanagari_entries, "w", 'utf-8') as file_out_devanagari:
-        while True:
-            headword = file_in.readline()
+        headwords = file_in.readlines()
+        progress_bar = tqdm.tqdm(total=len(headwords), desc="Headwords for %s" % letter, position=0)
+        for headword in headwords:
             if not headword:
                 break
-            if count % 10 == 0:
-                logging.info("Letter: %s, count: %d, headword: %s", letter, count, headword)
             definition = get_definition(headword=headword, browser=browser)
             headword = headword.strip().replace(":", "ઃ")
             devanagari_headword = sanscript.transliterate(data=headword, _from=sanscript.GUJARATI, _to=sanscript.DEVANAGARI)
             definition_devanagari = sanscript.transliterate(data=definition, _from=sanscript.GUJARATI, _to=sanscript.DEVANAGARI)
             file_out.writelines(["%s|%s\n%s\n\n" % (headword, devanagari_headword, definition)])
             file_out_devanagari.writelines(["%s|%s\n%s\n\n" % (headword, devanagari_headword, definition_devanagari)])
+            progress_bar.update(1)
+            progress_bar.set_description_str("Headword: %s\nDefinition: %s" % headword, definition_devanagari)
             count = count + 1
     browser.close()
     return count
@@ -110,5 +119,5 @@ def dump_definitions(in_path_dir, out_path_dir, out_path_dir_devanagari):
 
 
 if __name__ == '__main__':
-    get_headwords(out_path="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/bhagavad-go-maNDala/mUlam/")
-    dump_definitions(in_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/bhagavad-go-maNDala/mUlam/", out_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala/mUlam/", out_path_dir_devanagari="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/dev-entries/bhagavad-go-maNDala/mUlam/")
+    get_headwords(out_path="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala/headwords/")
+    # dump_definitions(in_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala/headwords/", out_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala/mUlam/", out_path_dir_devanagari="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/dev-entries/bhagavad-go-maNDala/mUlam/")
