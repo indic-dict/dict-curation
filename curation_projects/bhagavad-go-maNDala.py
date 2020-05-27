@@ -4,6 +4,7 @@ import os
 from functools import partial
 from multiprocessing import Pool
 
+import regex
 import tqdm
 from indic_transliteration import sanscript
 from selenium.common.exceptions import NoSuchElementException
@@ -64,7 +65,7 @@ def get_headwords(out_path):
     pool = Pool(4)
     f = partial(get_letter_headwords, out_path_dir=out_path)
     counts = pool.map(f, letters)
-    logging.info(zip(letters, counts))
+    logging.info(list(zip(letters, counts)))
 
 
 def get_definition(headword, browser):
@@ -72,12 +73,14 @@ def get_definition(headword, browser):
     browser.get(url=url)
     for detail_link in browser.find_elements_by_css_selector("a.detaillink"):
         detail_link.click()
-    rows = browser.find_elements_by_css_selector("div.right_middle tr")
-    definition = ""
-    for row in rows:
+    rows = browser.find_elements_by_css_selector("div.right_middle table table tr")
+    definition = "%s<br>" % headword
+    for row in rows[1:]:
         column_data = [c.text for c in row.find_elements_by_css_selector("td")]
-        row_definition = " ".join(column_data[0:2]) + "<br><br>" + column_data[3].replace("\n", "<br>")
-        definition = definition + row_definition + "<br><br>"
+        definition_detail = column_data[3].replace(".", "।")
+        definition_detail = regex.sub("\n+", "<br>", definition_detail)
+        row_definition = "%s<br>%s<br><br>" % (" ".join(column_data[0:2]), definition_detail)
+        definition = definition + row_definition
     return definition.replace(":", "ઃ")
 
 
@@ -95,17 +98,23 @@ def dump_letter_definitions(letter, in_path_dir, out_path_dir, out_path_dir_deva
     with codecs.open(in_path, "r", 'utf-8') as file_in, codecs.open(out_path, "w", 'utf-8') as file_out, codecs.open(out_path_devanagari_entries, "w", 'utf-8') as file_out_devanagari:
         headwords = file_in.readlines()
         progress_bar = tqdm.tqdm(total=len(headwords), desc="Headwords for %s" % letter, position=0)
+        log = tqdm.tqdm(total=0, position=3, bar_format='{desc}')
         for headword in headwords:
             if not headword:
                 break
+            headword = headword.strip()
+            if len(headword) == 0:
+                continue
             definition = get_definition(headword=headword, browser=browser)
-            headword = headword.strip().replace(":", "ઃ")
+            headword = headword.replace(":", "ઃ")
             devanagari_headword = sanscript.transliterate(data=headword, _from=sanscript.GUJARATI, _to=sanscript.DEVANAGARI)
+            devanagari_headword = sanscript.SCHEMES[sanscript.DEVANAGARI].fix_lazy_anusvaara(devanagari_headword)
             definition_devanagari = sanscript.transliterate(data=definition, _from=sanscript.GUJARATI, _to=sanscript.DEVANAGARI)
             file_out.writelines(["%s|%s\n%s\n\n" % (headword, devanagari_headword, definition)])
-            file_out_devanagari.writelines(["%s|%s\n%s\n\n" % (headword, devanagari_headword, definition_devanagari)])
+            devanagari_entry = "%s|%s\n%s\n\n" % (headword, devanagari_headword, definition_devanagari)
+            file_out_devanagari.writelines([devanagari_entry])
             progress_bar.update(1)
-            progress_bar.set_description_str("Headword: %s\nDefinition: %s" % headword, definition_devanagari)
+            log.set_description_str(devanagari_entry)
             count = count + 1
     browser.close()
     return count
@@ -114,10 +123,16 @@ def dump_letter_definitions(letter, in_path_dir, out_path_dir, out_path_dir_deva
 def dump_definitions(in_path_dir, out_path_dir, out_path_dir_devanagari):
     from tqdm.contrib.concurrent import process_map  # or thread_map
     f = partial(dump_letter_definitions, in_path_dir=in_path_dir, out_path_dir=out_path_dir, out_path_dir_devanagari=out_path_dir_devanagari)
-    results = process_map(f, letters, max_workers=4)
-    logging.info(zip(letters, results))
+    results = process_map(f, letters, max_workers=8)
+    logging.info(list(zip(letters, results)))
+
+def test_get_definition():
+    browser = scraping.get_selenium_browser()
+    logging.debug(get_definition("અ", browser=browser))
+    browser.close()
 
 
 if __name__ == '__main__':
-    get_headwords(out_path="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala/headwords/")
-    # dump_definitions(in_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala/headwords/", out_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala/mUlam/", out_path_dir_devanagari="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/dev-entries/bhagavad-go-maNDala/mUlam/")
+    # get_headwords(out_path="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala/headwords/")
+    # test_get_definition()
+    dump_definitions(in_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala/headwords/", out_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala/mUlam/", out_path_dir_devanagari="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/dev-entries/bhagavad-go-maNDala-dev/mUlam/")
