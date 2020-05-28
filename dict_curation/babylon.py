@@ -28,3 +28,15 @@ def transliterate_headword(file_path, source_script=sanscript.IAST, dest_script=
         os.remove(file_path)
         os.rename(src=tmp_file_path, dst=file_path)
 
+
+def get_definitions(in_path):
+    definitions = {}
+    with codecs.open(in_path, "r", 'utf-8') as file_in:
+        current_headwords = []
+        for (index, line) in enumerate(file_in.readlines()):
+            if index % 3 == 0:
+                current_headwords = line.strip().split("|")
+            if index % 3 == 1:
+                for headword in current_headwords:
+                    definitions[headword] = line.strip()
+    return definitions

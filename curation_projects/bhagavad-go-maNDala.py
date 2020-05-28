@@ -7,10 +7,11 @@ from multiprocessing import Pool
 import regex
 import tqdm
 from indic_transliteration import sanscript
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support.select import Select
 
 from curation_utils import scraping
+from dict_curation import babylon
 
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
@@ -70,14 +71,18 @@ def get_headwords(out_path):
 
 def get_definition(headword, browser):
     url = "http://www.bhagavadgomandal.com/index.php?action=dictionary&sitem=%s&type=3&page=0" % headword
-    browser.get(url=url)
+    try:
+        browser.get(url=url)
+    except TimeoutException:
+        logging.error("Timed out getting URL %s", url)
+        raise 
     for detail_link in browser.find_elements_by_css_selector("a.detaillink"):
         detail_link.click()
     rows = browser.find_elements_by_css_selector("div.right_middle table table tr")
     definition = "%s<br>" % headword
     for row in rows[1:]:
         column_data = [c.text for c in row.find_elements_by_css_selector("td")]
-        definition_detail = column_data[3].replace(".", "।")
+        definition_detail = column_data[3].replace(".", "॥")
         definition_detail = regex.sub("\n+", "<br>", definition_detail)
         row_definition = "%s<br>%s<br><br>" % (" ".join(column_data[0:2]), definition_detail)
         definition = definition + row_definition
@@ -89,12 +94,13 @@ def dump_letter_definitions(letter, in_path_dir, out_path_dir, out_path_dir_deva
     in_path = os.path.join(in_path_dir, letter + ".csv")
     out_path = os.path.join(out_path_dir, letter + ".babylon")
     out_path_devanagari_entries = os.path.join(out_path_dir_devanagari, letter + ".babylon")
-    if os.path.exists(out_path):
+    if os.path.exists(out_path) and os.path.exists(out_path_devanagari_entries) :
         logging.warning("Skipping %s since %s exists", letter, out_path)
-    
+        return 0
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     os.makedirs(os.path.dirname(out_path_devanagari_entries), exist_ok=True)
     count = 0
+    existing_definitions = babylon.get_definitions(out_path)
     with codecs.open(in_path, "r", 'utf-8') as file_in, codecs.open(out_path, "w", 'utf-8') as file_out, codecs.open(out_path_devanagari_entries, "w", 'utf-8') as file_out_devanagari:
         headwords = file_in.readlines()
         progress_bar = tqdm.tqdm(total=len(headwords), desc="Headwords for %s" % letter, position=0)
@@ -105,13 +111,16 @@ def dump_letter_definitions(letter, in_path_dir, out_path_dir, out_path_dir_deva
             headword = headword.strip()
             if len(headword) == 0:
                 continue
-            definition = get_definition(headword=headword, browser=browser)
+            if headword in existing_definitions:
+                definition = existing_definitions[headword]
+            else:
+                definition = get_definition(headword=headword, browser=browser)
             headword = headword.replace(":", "ઃ")
             devanagari_headword = sanscript.transliterate(data=headword, _from=sanscript.GUJARATI, _to=sanscript.DEVANAGARI)
             devanagari_headword = sanscript.SCHEMES[sanscript.DEVANAGARI].fix_lazy_anusvaara(devanagari_headword)
             definition_devanagari = sanscript.transliterate(data=definition, _from=sanscript.GUJARATI, _to=sanscript.DEVANAGARI)
-            file_out.writelines(["%s|%s\n%s\n\n" % (headword, devanagari_headword, definition)])
             devanagari_entry = "%s|%s\n%s\n\n" % (headword, devanagari_headword, definition_devanagari)
+            file_out.writelines(["%s|%s\n%s\n\n" % (headword, devanagari_headword, definition)])
             file_out_devanagari.writelines([devanagari_entry])
             progress_bar.update(1)
             log.set_description_str(devanagari_entry)
