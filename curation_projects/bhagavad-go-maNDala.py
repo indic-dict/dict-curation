@@ -69,7 +69,9 @@ def get_headwords(out_path):
     logging.info(list(zip(letters, counts)))
 
 
-def get_definition(headword, browser):
+def get_definition(headword, browser, existing_definitions={}):
+    if headword in existing_definitions and existing_definitions[headword] != "":
+        return existing_definitions[headword]
     url = "http://www.bhagavadgomandal.com/index.php?action=dictionary&sitem=%s&type=3&page=0" % headword
     try:
         browser.get(url=url)
@@ -90,10 +92,10 @@ def get_definition(headword, browser):
 
 
 def dump_letter_definitions(letter, in_path_dir, out_path_dir, out_path_dir_devanagari):
-    browser = scraping.get_selenium_browser(headless=True)
     in_path = os.path.join(in_path_dir, letter + ".csv")
     out_path = os.path.join(out_path_dir, letter + ".babylon")
     out_path_devanagari_entries = os.path.join(out_path_dir_devanagari, letter + ".babylon")
+    browser = scraping.get_selenium_browser(headless=True)
     if os.path.exists(out_path) and os.path.exists(out_path_devanagari_entries) :
         logging.warning("Skipping %s since %s exists", letter, out_path)
         return 0
@@ -106,21 +108,14 @@ def dump_letter_definitions(letter, in_path_dir, out_path_dir, out_path_dir_deva
         progress_bar = tqdm.tqdm(total=len(headwords), desc="Headwords for %s" % letter, position=0)
         log = tqdm.tqdm(total=0, position=3, bar_format='{desc}')
         for headword in headwords:
-            if not headword:
-                break
             headword = headword.strip()
-            if len(headword) == 0:
-                continue
-            if headword in existing_definitions:
-                definition = existing_definitions[headword]
-            else:
-                definition = get_definition(headword=headword, browser=browser)
             headword = headword.replace(":", "ઃ")
+            definition = get_definition(headword=headword, browser=browser, existing_definitions=existing_definitions)
             devanagari_headword = sanscript.transliterate(data=headword, _from=sanscript.GUJARATI, _to=sanscript.DEVANAGARI)
             devanagari_headword = sanscript.SCHEMES[sanscript.DEVANAGARI].fix_lazy_anusvaara(devanagari_headword)
             definition_devanagari = sanscript.transliterate(data=definition, _from=sanscript.GUJARATI, _to=sanscript.DEVANAGARI)
             devanagari_entry = "%s|%s\n%s\n\n" % (headword, devanagari_headword, definition_devanagari)
-            file_out.writelines(["%s|%s\n%s\n\n" % (headword, devanagari_headword, definition)])
+            file_out.writelines(["%s|%s\n%s\n\n" % (headword, devanagari_headword, definition.replace("॥", "  ॥ "))])
             file_out_devanagari.writelines([devanagari_entry])
             progress_bar.update(1)
             log.set_description_str(devanagari_entry)

@@ -29,6 +29,23 @@ def transliterate_headword(file_path, source_script=sanscript.IAST, dest_script=
         os.rename(src=tmp_file_path, dst=file_path)
 
 
+def fix_definitions(f, file_path, dry_run=False):
+    tmp_file_path = file_path + "_fixed"
+    with codecs.open(file_path, "r", 'utf-8') as file_in:
+        lines = file_in.readlines()
+        with codecs.open(tmp_file_path, "w", 'utf-8') as file_out:
+            for index, line in enumerate(lines):
+                if index % 3 == 1:
+                    line = f(line)
+                line = line
+                file_out.write(line)
+                if dry_run:
+                    print(line)
+    if not dry_run:
+        os.remove(file_path)
+        os.rename(src=tmp_file_path, dst=file_path)
+
+
 def get_definitions(in_path):
     definitions = {}
     with codecs.open(in_path, "r", 'utf-8') as file_in:
