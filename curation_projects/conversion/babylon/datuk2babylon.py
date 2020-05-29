@@ -5,6 +5,7 @@ License: GNU GPLv3
 '''
 from __future__ import unicode_literals
 import codecs, sys, csv, re
+import os
 from collections import namedtuple
 from indic_transliteration import sanscript
 from indic_transliteration.sanscript import SchemeMap, SCHEMES, transliterate, Scheme
@@ -138,16 +139,10 @@ ml2ot_sm = SchemeMap(MALAYALAM_SCHEME, OPTITRANS_SCHEME)
 ml2dn_sm = SchemeMap(MALAYALAM_SCHEME, DEVANAGARI_SCHEME)
 
 if __name__ == '__main__' :
-    args = sys.argv
-    args_given = True
-    if not args or len(args) == 1:
-        args_given = False
-    elif len(args)!= 4:
-        sys.exit('wrong no of args given')
-    
-    corpusf = args[1] if args_given else 'datuk.corpus'
-    tagsf = args[2] if args_given else 'tags'
-    blf = args[3] if args_given else 'datuk.babylon'
+    dict_dir = "/home/vvasuki/indic-dict/stardict-malayalam/ml-head/datuk/"
+    corpusf = os.path.join(dict_dir, 'datuk.corpus')
+    tagsf = os.path.join(dict_dir, 'tags')
+    blf = os.path.join(dict_dir, 'datuk.babylon')
     
     tagsd = {row[0].decode('utf-8') : row[-1].decode('utf-8') for row in csv.reader(open(tagsf, 'rb'), delimiter=str(u'\t').encode('utf-8'))}
     #print tagsd
@@ -162,8 +157,8 @@ if __name__ == '__main__' :
             bl_entry = ''
             ordinal_match = re.compile(r'^(.+)([0-9]+)$').match(entry.word)
             header_line = (entry.word + '|' + ordinal_match.group(1)) if ordinal_match else entry.word
-            header_line+= '|' + transliterate(ordinal_match.group(1) if ordinal_match else entry.word, scheme_map=ml2dn_sm)
-            header_line+= '|' + transliterate(ordinal_match.group(1) if ordinal_match else entry.word, scheme_map=ml2ot_sm)
+            header_line+= '|' + sanscript.transliterate(ordinal_match.group(1) if ordinal_match else entry.word, _from=sanscript.MALAYALAM, _to=sanscript.DEVANAGARI)
+            header_line+= '|' + sanscript.transliterate(ordinal_match.group(1) if ordinal_match else entry.word, _from=sanscript.MALAYALAM, _to=sanscript.OPTITRANS)
             header_line+= '\n'
             bl_entry+= header_line
             

@@ -9,6 +9,7 @@ import tqdm
 from indic_transliteration import sanscript
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support.select import Select
+from selenium.webdriver.support.wait import WebDriverWait
 
 from curation_utils import scraping
 from dict_curation import babylon
@@ -18,10 +19,6 @@ for handler in logging.root.handlers[:]:
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(levelname)s:%(asctime)s:%(module)s:%(lineno)d %(message)s")
-
-
-
-letters = "અ આ ઇ ઈ ઉ ઊ ઋ ઌ ઍ એ ઐ ઑ ઓ ઔ ક ખ ગ ઘ ઙ ચ છ જ ઝ ઞ ટ ઠ ડ ઢ ણ ત થ દ ધ ન પ ફ બ ભ મ ય ર લ ળ વ શ ષ સ હ ૐ ૠ ૡ".split()
 
 
 
@@ -62,29 +59,46 @@ def get_letter_headwords(letter, out_path_dir):
         return word_count
 
 
-def get_headwords(out_path):
+def get_headwords(letters, out_path):
     pool = Pool(4)
     f = partial(get_letter_headwords, out_path_dir=out_path)
     counts = pool.map(f, letters)
     logging.info(list(zip(letters, counts)))
 
 
-def get_definition(headword, browser, existing_definitions={}):
-    if headword in existing_definitions and existing_definitions[headword] != "":
+def detail_elements_ready(browser):
+    elements = browser.find_elements_by_css_selector(".detailbox")   # Finding the referenced element
+    for element in elements:
+        if "શોધી રહ્યા છે" in element.text:
+            return False
+    return True
+
+
+def get_definition(headword, browser, existing_definitions={}, log=None):
+    if headword in existing_definitions and existing_definitions[headword] != "" and "શોધી રહ્યા છે" not in existing_definitions[headword]:
         return existing_definitions[headword]
     url = "http://www.bhagavadgomandal.com/index.php?action=dictionary&sitem=%s&type=3&page=0" % headword
+    if log is not None:
+        log.set_description_str("Getting %s: %s" % (headword, url))
     try:
         browser.get(url=url)
     except TimeoutException:
-        logging.error("Timed out getting URL %s", url)
+        log.set_description_str("ERROR: Timed out getting  %s: %s" % (headword, url))
         raise 
-    for detail_link in browser.find_elements_by_css_selector("a.detaillink"):
+    detail_links = browser.find_elements_by_css_selector("a.detaillink")
+    for detail_link in detail_links:
         detail_link.click()
+    wait = WebDriverWait(browser, 10 * len(detail_links))
+    try:
+        wait.until(detail_elements_ready)
+    except TimeoutException:
+        log.set_description_str("ERROR: Skipping without details :  %s: %s" % (headword, url))
+        
     rows = browser.find_elements_by_css_selector("div.right_middle table table tr")
     definition = "%s<br>" % headword
     for row in rows[1:]:
         column_data = [c.text for c in row.find_elements_by_css_selector("td")]
-        definition_detail = column_data[3].replace(".", "॥")
+        definition_detail = column_data[3].replace(".", "  ॥ ")
         definition_detail = regex.sub("\n+", "<br>", definition_detail)
         row_definition = "%s<br>%s<br><br>" % (" ".join(column_data[0:2]), definition_detail)
         definition = definition + row_definition
@@ -110,21 +124,21 @@ def dump_letter_definitions(letter, in_path_dir, out_path_dir, out_path_dir_deva
         for headword in headwords:
             headword = headword.strip()
             headword = headword.replace(":", "ઃ")
-            definition = get_definition(headword=headword, browser=browser, existing_definitions=existing_definitions)
+            definition = get_definition(headword=headword, browser=browser, existing_definitions=existing_definitions, log=log)
             devanagari_headword = sanscript.transliterate(data=headword, _from=sanscript.GUJARATI, _to=sanscript.DEVANAGARI)
             devanagari_headword = sanscript.SCHEMES[sanscript.DEVANAGARI].fix_lazy_anusvaara(devanagari_headword)
             definition_devanagari = sanscript.transliterate(data=definition, _from=sanscript.GUJARATI, _to=sanscript.DEVANAGARI)
-            devanagari_entry = "%s|%s\n%s\n\n" % (headword, devanagari_headword, definition_devanagari)
-            file_out.writelines(["%s|%s\n%s\n\n" % (headword, devanagari_headword, definition.replace("॥", "  ॥ "))])
+            devanagari_entry = "%s|%s\n%s\n\n" % (headword, devanagari_headword, definition_devanagari.replace("  ॥", "।"))
+            file_out.writelines(["%s|%s\n%s\n\n" % (headword, devanagari_headword, definition)])
             file_out_devanagari.writelines([devanagari_entry])
             progress_bar.update(1)
-            log.set_description_str(devanagari_entry)
+            # log.set_description_str(devanagari_entry)
             count = count + 1
     browser.close()
     return count
 
 
-def dump_definitions(in_path_dir, out_path_dir, out_path_dir_devanagari):
+def dump_definitions(letters, in_path_dir, out_path_dir, out_path_dir_devanagari):
     from tqdm.contrib.concurrent import process_map  # or thread_map
     f = partial(dump_letter_definitions, in_path_dir=in_path_dir, out_path_dir=out_path_dir, out_path_dir_devanagari=out_path_dir_devanagari)
     results = process_map(f, letters, max_workers=8)
@@ -139,4 +153,8 @@ def test_get_definition():
 if __name__ == '__main__':
     # get_headwords(out_path="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala/headwords/")
     # test_get_definition()
-    dump_definitions(in_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala/headwords/", out_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala/mUlam/", out_path_dir_devanagari="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/dev-entries/bhagavad-go-maNDala-dev/mUlam/")
+    letters_a_Na = "ૐ ૠ ૡ અ આ ઇ ઈ ઉ ઊ ઋ ઌ ઍ એ ઐ ઑ ઓ ઔ ક ખ ગ ઘ ઙ ચ છ જ ઝ ઞ ટ ઠ ડ ઢ ણ".split()
+    letters_ta_La = "ત થ દ ધ ન પ ફ બ ભ મ ય ર લ ળ વ શ ષ સ હ".split()
+
+    # dump_definitions(letters=letters_a_Na, in_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala-a-Na/headwords/", out_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala-a-Na/mUlam/", out_path_dir_devanagari="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/dev-entries/bhagavad-go-maNDala-dev-a-Na/mUlam/")
+    dump_definitions(letters=letters_ta_La, in_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala-ta-La/headwords/", out_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala-ta-La/mUlam/", out_path_dir_devanagari="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/dev-entries/bhagavad-go-maNDala-dev-ta-La/mUlam/")
