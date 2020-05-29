@@ -24,10 +24,6 @@ logging.basicConfig(
     format="%(levelname)s:%(asctime)s:%(module)s:%(lineno)d %(message)s")
 
 
-logger = logging.getLogger('chardet')
-logger.setLevel(logging.CRITICAL)
-
-
 def get_letter_headwords(letter, out_path_dir):
     browser = scraping.get_selenium_browser(headless=True)
     out_path = os.path.join(out_path_dir, letter + ".csv")
@@ -85,7 +81,7 @@ def get_definition(headword, existing_definitions={}, log=None):
     if log is not None:
         log.set_description_str("Getting %s: %s" % (headword, url))
     result = requests.get(url)
-    soup = BeautifulSoup(result.content, features="lxml")
+    soup = scraping.get_soup(url)
     # except TimeoutException:
     #     log.set_description_str("ERROR: Timed out getting  %s: %s" % (headword, url))
     #     raise 
