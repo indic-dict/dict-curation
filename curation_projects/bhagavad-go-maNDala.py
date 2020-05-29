@@ -6,7 +6,9 @@ from functools import partial
 from multiprocessing import Pool
 
 import regex
+import requests
 import tqdm
+from bs4 import BeautifulSoup
 from indic_transliteration import sanscript
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support.select import Select
@@ -21,6 +23,9 @@ logging.basicConfig(
     level=logging.DEBUG,
     format="%(levelname)s:%(asctime)s:%(module)s:%(lineno)d %(message)s")
 
+
+logger = logging.getLogger('chardet')
+logger.setLevel(logging.CRITICAL)
 
 
 def get_letter_headwords(letter, out_path_dir):
@@ -67,15 +72,7 @@ def get_headwords(letters, out_path):
     logging.info(list(zip(letters, counts)))
 
 
-def detail_elements_ready(browser):
-    elements = browser.find_elements_by_css_selector(".detailbox")   # Finding the referenced element
-    for element in elements:
-        if "શોધી રહ્યા છે" in element.text:
-            return False
-    return True
-
-
-def get_definition(headword, browser, existing_definitions={}, log=None):
+def get_definition(headword, existing_definitions={}, log=None):
     if headword in existing_definitions:
         existing_definition = existing_definitions[headword]
         existing_definition = existing_definition.replace("%s<br>" % headword, "").strip()
@@ -84,33 +81,35 @@ def get_definition(headword, browser, existing_definitions={}, log=None):
     
     # type=3 sometimes fails while type=1 succeeds.
     url = "http://www.bhagavadgomandal.com/index.php?action=dictionary&sitem=%s&type=1&page=0" % headword
+    
     if log is not None:
         log.set_description_str("Getting %s: %s" % (headword, url))
-    try:
-        browser.get(url=url)
-    except TimeoutException:
-        log.set_description_str("ERROR: Timed out getting  %s: %s" % (headword, url))
-        raise 
-    detail_links = browser.find_elements_by_css_selector("a.detaillink")
+    result = requests.get(url)
+    soup = BeautifulSoup(result.content, features="lxml")
+    # except TimeoutException:
+    #     log.set_description_str("ERROR: Timed out getting  %s: %s" % (headword, url))
+    #     raise 
+    detail_links = soup.select("a.detaillink")
     for detail_link in detail_links:
-        js = detail_link.get_attribute("onclick")
-        if js is None:
-            log.set_description_str("WARNING: No attribute named onclick.")
+        js = detail_link["onclick"] # ClickonDetails(80404,156152);
+        detail_parts = js.replace("ClickonDetails(", "").replace(")", "").replace(";", "").split(",")
+        assert len(detail_parts) == 2
+        detail_url = "http://www.bhagavadgomandal.com/index.php?action=getotherdetails&fkword=%s&fkmeaning=%s" % (detail_parts[0], detail_parts[1])
+        result = requests.get(detail_url)
+        if "DB Select Error" in result.text:
+            logging.warning("Could not expand details! %s %s" % (url, detail_url))
+            detail_link.string = "શોધી રહ્યા છે  ॥ "
         else:
-            browser.execute_script(js)
-    wait = WebDriverWait(browser, 30 * len(detail_links))
-    try:
-        wait.until(detail_elements_ready)
-    except TimeoutException:
-        log.set_description_str("ERROR: Skipping without details :  %s: %s" % (headword, url))
-        
-    rows = browser.find_elements_by_css_selector("div.right_middle table table tr")
+            detail_link.string = result.text
+    rows = soup.select("div.right_middle table table tr")
     definition_body = ""
     for row in rows[1:]:
-        column_data = [c.text for c in row.find_elements_by_css_selector("td")]
-        definition_item = column_data[3].replace(".", "  ॥ ")
+        columns = row.find_all("td")
+        meta_text = [column.string if column.string is not None else "" for column in columns]
+        definition_texts = columns[3].stripped_strings
+        definition_item = "<br>".join(definition_texts).replace(".", "  ॥ ")
         definition_item = regex.sub("\n+", "<br>", definition_item)
-        row_definition = "%s<br>%s<br><br>" % (" ".join(column_data[0:2]), definition_item)
+        row_definition = "%s<br>%s<br><br>" % (" ".join(meta_text[0:2]), definition_item)
         definition_body = definition_body + row_definition
     if definition_body.strip() == "":
         return ""
@@ -121,7 +120,6 @@ def dump_letter_definitions(letter, in_path_dir, out_path_dir, out_path_dir_deva
     in_path = os.path.join(in_path_dir, letter + ".csv")
     out_path = os.path.join(out_path_dir, letter + ".babylon")
     out_path_devanagari_entries = os.path.join(out_path_dir_devanagari, letter + ".babylon")
-    browser = scraping.get_selenium_browser(headless=True)
     if os.path.exists(out_path) and os.path.exists(out_path_devanagari_entries) :
         logging.warning("Skipping %s since %s exists", letter, out_path)
         return 0
@@ -140,7 +138,7 @@ def dump_letter_definitions(letter, in_path_dir, out_path_dir, out_path_dir_deva
             headword = headword.replace(":", "ઃ")
             if headword == "":
                 continue
-            definition = get_definition(headword=headword, browser=browser, existing_definitions=existing_definitions, log=log)
+            definition = get_definition(headword=headword,  existing_definitions=existing_definitions, log=log)
             if definition == "":
                 empty_count = empty_count + 1
                 continue
@@ -155,7 +153,6 @@ def dump_letter_definitions(letter, in_path_dir, out_path_dir, out_path_dir_deva
             progress_bar.update(1)
             # log.set_description_str(devanagari_entry)
             count = count + 1
-    browser.close()
     return (count, empty_count, incomplete_count)
 
 
@@ -165,9 +162,10 @@ def dump_definitions(letters, in_path_dir, out_path_dir, out_path_dir_devanagari
     results = process_map(f, letters, max_workers=8)
     logging.info(list(zip(letters, results)))
 
+
 def test_get_definition():
     browser = scraping.get_selenium_browser()
-    logging.debug(get_definition("અ", browser=browser))
+    logging.debug(get_definition("અ"))
     browser.close()
 
 
@@ -177,6 +175,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # get_headwords(out_path="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala/headwords/")
     # test_get_definition()
+    # exit()
     letters_a_Na = "ૐ ૠ ૡ અ આ ઇ ઈ ઉ ઊ ઋ ઌ ઍ એ ઐ ઑ ઓ ઔ ક ખ ગ ઘ ઙ ચ છ જ ઝ ઞ ટ ઠ ડ ઢ ણ".split()
     letters_ta_La = "ત થ દ ધ ન પ ફ બ ભ મ ય ર લ ળ વ શ ષ સ હ".split()
 
