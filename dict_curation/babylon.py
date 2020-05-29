@@ -4,6 +4,8 @@ import os
 
 from indic_transliteration import sanscript
 # Remove all handlers associated with the root logger object.
+from tqdm import tqdm
+
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
 logging.basicConfig(
@@ -47,13 +49,28 @@ def fix_definitions(f, file_path, dry_run=False):
 
 
 def get_definitions(in_path):
+    logging.info("Getting definitions from %s" % in_path)
     definitions = {}
+    empty_headwords = 0
+    empty_definitions = 0
+    definition_lines = 0
     with codecs.open(in_path, "r", 'utf-8') as file_in:
         current_headwords = []
-        for (index, line) in enumerate(file_in.readlines()):
+        for (index, line) in tqdm(enumerate(file_in.readlines())):
             if index % 3 == 0:
                 current_headwords = line.strip().split("|")
             if index % 3 == 1:
+                definition = line.strip()
+                if definition == "":
+                    empty_definitions = empty_definitions + 1
+                    continue
                 for headword in current_headwords:
-                    definitions[headword] = line.strip()
+                    if headword == "":
+                        empty_headwords = empty_headwords + 1
+                    else:
+                        definitions[headword] = definition
+                definition_lines = definition_lines + 1
+    if empty_headwords != 0 or empty_definitions != 0:
+        logging.warning("empty_headwords: %d , empty_definitions: %d from %s", empty_headwords, empty_definitions, in_path)
+    logging.info("Getting %d definitions for %d headwords from %s" % (definition_lines, len(definitions), in_path))
     return definitions
