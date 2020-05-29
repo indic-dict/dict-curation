@@ -102,10 +102,14 @@ def get_definition(headword, existing_definitions={}, log=None):
     for row in rows[1:]:
         columns = row.find_all("td")
         meta_text = [column.string if column.string is not None else "" for column in columns]
-        definition_texts = columns[3].stripped_strings
-        definition_item = "<br>".join(definition_texts).replace(".", "  ॥ ")
-        definition_item = regex.sub("\n+", "<br>", definition_item)
-        row_definition = "%s<br>%s<br><br>" % (" ".join(meta_text[0:2]), definition_item)
+        if len(columns) < 4:
+            row_definition = " ".join(row.stripped_strings)
+            logging.warning("Could not get definition! %s %s" % (url, row_definition))
+        else:
+            definition_texts = columns[3].stripped_strings
+            definition_item = "<br>".join(definition_texts).replace(".", "  ॥ ")
+            definition_item = regex.sub("\n+", "<br>", definition_item)
+            row_definition = "%s<br>%s<br><br>" % (" ".join(meta_text[0:2]), definition_item)
         definition_body = definition_body + row_definition
     if definition_body.strip() == "":
         return ""
