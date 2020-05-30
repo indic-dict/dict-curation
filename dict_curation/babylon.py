@@ -1,10 +1,13 @@
 import codecs
 import logging
 import os
+from pathlib import Path
 
 from indic_transliteration import sanscript
 # Remove all handlers associated with the root logger object.
 from tqdm import tqdm
+
+from curation_utils import file_helper
 
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
@@ -70,7 +73,18 @@ def get_definitions(in_path):
                     else:
                         definitions[headword] = definition
                 definition_lines = definition_lines + 1
+            else:
+                if line.strip() != "":
+                    logging.error("Bad line: %d is %s", index + 1, line)
+                    raise Exception
     if empty_headwords != 0 or empty_definitions != 0:
         logging.warning("empty_headwords: %d , empty_definitions: %d from %s", empty_headwords, empty_definitions, in_path)
     logging.info("Getting %d definitions for %d headwords from %s" % (definition_lines, len(definitions), in_path))
     return definitions
+
+
+def join_babylon_segments_in_dir(out_path_dir):
+    final_babylon_dir = Path(out_path_dir).parent
+    final_babylon_name = os.path.basename(final_babylon_dir) + ".babylon"
+    file_helper.concatenate_files(input_path_list=Path(out_path_dir).glob("*.babylon"), output_path=os.path.join(final_babylon_dir, final_babylon_name))
+    

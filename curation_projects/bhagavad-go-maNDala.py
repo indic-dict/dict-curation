@@ -4,6 +4,7 @@ import logging
 import os
 from functools import partial
 from multiprocessing import Pool
+from pathlib import Path
 
 import regex
 import requests
@@ -14,7 +15,7 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.wait import WebDriverWait
 
-from curation_utils import scraping
+from curation_utils import scraping, file_helper
 from dict_curation import babylon
 
 for handler in logging.root.handlers[:]:
@@ -160,6 +161,8 @@ def dump_definitions(letters, in_path_dir, out_path_dir, out_path_dir_devanagari
     f = partial(dump_letter_definitions, in_path_dir=in_path_dir, out_path_dir=out_path_dir, out_path_dir_devanagari=out_path_dir_devanagari)
     results = process_map(f, letters, max_workers=8)
     logging.info(list(zip(letters, results)))
+    babylon.join_babylon_segments_in_dir(out_path_dir=out_path_dir)
+    babylon.join_babylon_segments_in_dir(out_path_dir=out_path_dir_devanagari)
 
 
 def test_get_definition(x):
@@ -179,5 +182,6 @@ if __name__ == '__main__':
 
     if args.part == 1:
         dump_definitions(letters=letters_a_Na, in_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala-a-Na/headwords/", out_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala-a-Na/mUlam/", out_path_dir_devanagari="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/dev-entries/bhagavad-go-maNDala-dev-a-Na/mUlam/")
+        
     elif args.part == 2:
         dump_definitions(letters=letters_ta_La, in_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala-ta-La/headwords/", out_path_dir="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala-ta-La/mUlam/", out_path_dir_devanagari="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/dev-entries/bhagavad-go-maNDala-dev-ta-La/mUlam/")
