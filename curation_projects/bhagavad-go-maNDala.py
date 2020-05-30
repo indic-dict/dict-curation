@@ -80,7 +80,6 @@ def get_definition(headword, existing_definitions={}, log=None):
     
     if log is not None:
         log.set_description_str("Getting %s: %s" % (headword, url))
-    result = requests.get(url)
     soup = scraping.get_soup(url)
     # except TimeoutException:
     #     log.set_description_str("ERROR: Timed out getting  %s: %s" % (headword, url))
@@ -163,10 +162,10 @@ def dump_definitions(letters, in_path_dir, out_path_dir, out_path_dir_devanagari
     logging.info(list(zip(letters, results)))
 
 
-def test_get_definition():
-    browser = scraping.get_selenium_browser()
-    logging.debug(get_definition("અ"))
-    browser.close()
+def test_get_definition(x):
+    existing_definitions = babylon.get_definitions("/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala-a-Na/mUlam/આ.babylon")
+    logging.debug(get_definition(headword=x, existing_definitions=existing_definitions))
+    exit()
 
 
 if __name__ == '__main__':
@@ -174,8 +173,7 @@ if __name__ == '__main__':
     parser.add_argument("--part", dest="part", default=1, type=int, help="..")
     args = parser.parse_args()
     # get_headwords(out_path="/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala/headwords/")
-    # test_get_definition()
-    # exit()
+    # test_get_definition("આપોશાન")
     letters_a_Na = "ૐ ૠ ૡ અ આ ઇ ઈ ઉ ઊ ઋ ઌ ઍ એ ઐ ઑ ઓ ઔ ક ખ ગ ઘ ઙ ચ છ જ ઝ ઞ ટ ઠ ડ ઢ ણ".split()
     letters_ta_La = "ત થ દ ધ ન પ ફ બ ભ મ ય ર લ ળ વ શ ષ સ હ".split()
 
