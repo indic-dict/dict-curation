@@ -86,5 +86,7 @@ def get_definitions(in_path):
 def join_babylon_segments_in_dir(out_path_dir):
     final_babylon_dir = Path(out_path_dir).parent
     final_babylon_name = os.path.basename(final_babylon_dir) + ".babylon"
-    file_helper.concatenate_files(input_path_list=Path(out_path_dir).glob("*.babylon"), output_path=os.path.join(final_babylon_dir, final_babylon_name))
+    input_files = list(Path(out_path_dir).glob("*.babylon"))
+    input_files.sort()
+    file_helper.concatenate_files(input_path_list=input_files, output_path=os.path.join(final_babylon_dir, final_babylon_name))
     
