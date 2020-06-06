@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 
@@ -17,9 +18,11 @@ for file in data_files:
         for line in csvfile.readlines():
             entry_parts = line.split(":")
             if len(entry_parts) < 2:
+                logging.debug("Skipping line in %s: %s", str(file), line)
                 continue
-            root = sanscript.SCHEMES[sanscript.DEVANAGARI].fix_lazy_anusvaara(entry_parts[0].strip())
+            roots = sanscript.SCHEMES[sanscript.DEVANAGARI].fix_lazy_anusvaara(entry_parts[0].strip()).split(",")
+            roots = [root.strip() for root in roots]
             meaning = entry_parts[1].strip()
             with open(outfile_path, "a") as outfile:
-                outfile.write("%s\n%s\n\n" % (root, meaning))
+                outfile.write("%s\n%s\n\n" % ("|".join(roots), meaning))
 
