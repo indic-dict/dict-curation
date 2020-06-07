@@ -29,8 +29,11 @@ for file in data_files:
                 if len(regex.findall("[ऀ-ॿ]", line)) > 0 and not line.startswith("#"):
                     logging.warning("Skipping line in %s:\n%s", str(file), line)
                 continue
-            roots = sanscript.SCHEMES[sanscript.DEVANAGARI].fix_lazy_anusvaara(entry_parts[0].strip()).split(",")
+            roots = entry_parts[0].strip().split(",")
             roots = [root.strip() for root in roots]
+            roots.extend([sanscript.SCHEMES[sanscript.DEVANAGARI].fix_lazy_anusvaara(root) for root in roots])
+            from  more_itertools import unique_everseen
+            roots = list(unique_everseen(roots))
             for root in roots:
                 if " " in root and not root.endswith("यो") and not root.endswith("यौ") and not root.endswith("उ") and not root.endswith("टा"):
                     # logging.warning("%s contains space", root)
