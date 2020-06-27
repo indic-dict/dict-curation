@@ -4,18 +4,15 @@ import logging
 import os
 from functools import partial
 from multiprocessing import Pool
-from pathlib import Path
 
 import regex
 import requests
 import tqdm
-from bs4 import BeautifulSoup
 from indic_transliteration import sanscript
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.select import Select
-from selenium.webdriver.support.wait import WebDriverWait
 
-from curation_utils import scraping, file_helper
+from curation_utils import scraping
 from dict_curation import babylon
 
 for handler in logging.root.handlers[:]:
