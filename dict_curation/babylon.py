@@ -62,7 +62,7 @@ def get_definitions(in_path):
         for (index, line) in tqdm(enumerate(file_in.readlines())):
             if index % 3 == 0:
                 current_headwords = line.strip().split("|")
-            if index % 3 == 1:
+            elif index % 3 == 1:
                 definition = line.strip()
                 if definition == "":
                     empty_definitions = empty_definitions + 1
@@ -89,4 +89,32 @@ def join_babylon_segments_in_dir(out_path_dir):
     input_files = list(Path(out_path_dir).glob("*.babylon"))
     input_files.sort()
     file_helper.concatenate_files(input_path_list=input_files, output_path=os.path.join(final_babylon_dir, final_babylon_name))
-    
+
+
+def get_headwords(in_path):
+    headwords = []
+    with codecs.open(in_path, "r", 'utf-8') as file_in:
+        current_headwords = []
+        for (index, line) in tqdm(enumerate(file_in.readlines())):
+            if index % 3 == 0:
+                current_headwords = [hw for hw in line.strip().split("|") if hw != "" ]
+                headwords.extend(current_headwords)
+    headwords = list(set(headwords))
+    headwords.sort()
+    return headwords
+
+
+def dump_headwords_file(in_path, out_path):
+    headwords = get_headwords(in_path=in_path)
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with codecs.open(out_path, "w", 'utf-8') as file_out:
+        for headword in headwords:
+            file_out.write(headword + "\n")
+
+
+def dump_definitions_file(in_path, out_path):
+    definitions = get_definitions(in_path=in_path)
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with codecs.open(out_path, "w", 'utf-8') as file_out:
+        for headword in definitions.values():
+            file_out.write(headword + "\n")
