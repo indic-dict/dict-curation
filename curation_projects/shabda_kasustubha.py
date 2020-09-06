@@ -1,13 +1,9 @@
 import logging
 import os
-import sys
-import traceback
 
 import regex
-from selenium.common.exceptions import NoSuchElementException
 
 from dict_curation import babylon
-from doc_curation import text_data
 from doc_curation.scraping import parankusha
 
 
