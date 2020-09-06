@@ -1,4 +1,5 @@
 import codecs
+import itertools
 import logging
 import os
 from pathlib import Path
@@ -60,9 +61,10 @@ def get_definitions(in_path, do_fix_newlines=False):
     with codecs.open(in_path, "r", 'utf-8') as file_in:
         current_headwords = []
         lines = file_in.readlines()
+        lines = list(itertools.dropwhile(lambda x: x.strip() == "" or x.startswith("#"), lines))
         if do_fix_newlines:
             lines = fix_newlines(lines=lines)
-            with codecs.open(in_path + "fixed", "w", 'utf-8') as file_out:
+            with codecs.open(in_path + "_fixed", "w", 'utf-8') as file_out:
                 file_out.writelines(lines)
         for (index, line) in tqdm(enumerate(lines)):
             if index % 3 == 0:

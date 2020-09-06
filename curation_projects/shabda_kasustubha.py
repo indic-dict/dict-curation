@@ -48,17 +48,25 @@ def get_dict(browser, outfile_path, start_nodes=["अ--उह्र", "अ--अ�
     parankusha.click_link_by_text(browser=browser, element_text=start_nodes[0])
     parankusha.click_link_by_text(browser=browser, element_text=start_nodes[1])
     os.makedirs(name=os.path.dirname(outfile_path), exist_ok=True)
-    if start_nodes[0] == "अ--उह्र":
+    if start_nodes[0] == "अ--उह्र" and start_nodes[1] == "अ--अग्निनक्षत्र":
         os.remove(outfile_path)
     # with open(outfile_path, "w") as outfile:
     with open(outfile_path, "a") as outfile:
+        if start_nodes[0] == "अ--उह्र" and start_nodes[1] == "अ--अग्निनक्षत्र":
+            outfile.write("""
+    
+    #stripmethod=keep
+    #sametypesequence=h
+    #bookname=शब्दार्थकौस्तुभः sa-kn
+    
+            """)
         get_entries(browser, outfile)
         while parankusha.click_link_by_text(browser=browser, element_text="Next"):
             get_entries(browser, outfile)
         
 
 if __name__ == '__main__':
-    browser = parankusha.get_logged_in_browser(headless=False)
-    get_dict(browser=browser, outfile_path="/home/vvasuki/indic-dict/stardict-sanskrit/sa-head/other-indic-entries/shabdArtha_kaustubha/shabdArtha_kasutubha.babylon", start_nodes=["वेदान्तिन्--ह्लाद्य", "शर्करा--शालसार"])
-    # babylon.get_definitions(in_path="/home/vvasuki/indic-dict/stardict-sanskrit/sa-head/other-indic-entries/shabdArtha_kaustubha/shabdArtha_kasutubha.babylon", do_fix_newlines=True)
+    # browser = parankusha.get_logged_in_browser(headless=False)
+    # get_dict(browser=browser, outfile_path="/home/vvasuki/indic-dict/stardict-sanskrit/sa-head/other-indic-entries/shabdArtha_kaustubha/shabdArtha_kasutubha.babylon", start_nodes=["वेदान्तिन्--ह्लाद्य", "शर्करा--शालसार"])
+    babylon.get_definitions(in_path="/home/vvasuki/indic-dict/stardict-sanskrit/sa-head/other-indic-entries/shabdArtha_kaustubha/shabdArtha_kaustubha.babylon", do_fix_newlines=True)
     # browser.close()    
