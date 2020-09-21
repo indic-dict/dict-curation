@@ -1,5 +1,7 @@
+^[![Build status](https://github.com/sanskrit-coders/dict_curation/workflows/Python%20package/badge.svg)](https://github.com/sanskrit-coders/dict_curation/actions)
 [![Build Status](https://travis-ci.org/sanskrit-coders/dict_curation.svg?branch=master)](https://travis-ci.org/sanskrit-coders/dict_curation)
 [![Documentation Status](https://readthedocs.org/projects/dict_curation/badge/?version=latest)](http://dict_curation.readthedocs.io/en/latest/?badge=latest)
+[![PyPI version](https://badge.fury.io/py/dict_curation.svg)](https://badge.fury.io/py/dict_curation)
 
 ## dict curation
 
