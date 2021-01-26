@@ -104,6 +104,7 @@ def fix_newlines(lines):
                 return fix_newlines(lines=lines)
     return lines
 
+
 def join_babylon_segments_in_dir(out_path_dir):
     final_babylon_dir = Path(out_path_dir).parent
     final_babylon_name = os.path.basename(final_babylon_dir) + ".babylon"
@@ -144,6 +145,12 @@ def dump_definitions_file(in_path, out_path):
 def to_slob(in_path, out_path):
     definitions = get_definitions(in_path=in_path)
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    if os.path.exists(out_path):
+        os.remove(out_path)
     with slob.create(out_path) as w:
-        for headword, definition in definitions.items():
-            w.add(definition.meaning, definition.headwords)
+        for definition in set(definitions.values()):
+            w.add(definition.meaning.encode('utf-8'), *(definition.headwords_tuple), content_type=slob.MIME_HTML)
+
+
+if __name__ == '__main__':
+    to_slob("/home/vvasuki/indic-dict/stardict-sinhala/si-head/en-entries/carter/carter.babylon_final", "/home/vvasuki/indic-dict/stardict-sinhala/si-head/en-entries/slobs/carter__2018-03-22_03-14-55__unkMB.slob")
