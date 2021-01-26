@@ -4,6 +4,7 @@ import logging
 import os
 from pathlib import Path
 
+from dict_curation import slob, Definition
 from indic_transliteration import sanscript
 # Remove all handlers associated with the root logger object.
 from tqdm import tqdm
@@ -70,11 +71,12 @@ def get_definitions(in_path, do_fix_newlines=False):
             if index % 3 == 0:
                 current_headwords = line.strip().split("|")
             elif index % 3 == 1:
-                definition = line.strip()
-                if definition == "":
+                meaning = line.strip()
+                if meaning == "":
                     empty_definitions = empty_definitions + 1
                     logging.warning("Empty definition for %s at %d", "|".join(current_headwords), index + 1)
                     continue
+                definition = Definition(headwords_tuple=tuple(current_headwords), meaning=meaning)
                 for headword in current_headwords:
                     if headword == "":
                         empty_headwords = empty_headwords + 1
@@ -137,3 +139,11 @@ def dump_definitions_file(in_path, out_path):
     with codecs.open(out_path, "w", 'utf-8') as file_out:
         for headword in definitions.values():
             file_out.write(headword + "\n")
+
+
+def to_slob(in_path, out_path):
+    definitions = get_definitions(in_path=in_path)
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with slob.create(out_path) as w:
+        for headword, definition in definitions.items():
+            w.add(definition.meaning, definition.headwords)
