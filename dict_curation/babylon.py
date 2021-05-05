@@ -138,8 +138,8 @@ def dump_definitions_file(in_path, out_path):
     definitions = get_definitions(in_path=in_path)
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with codecs.open(out_path, "w", 'utf-8') as file_out:
-        for headword in definitions.values():
-            file_out.write(headword + "\n")
+        for definition in definitions.values():
+            file_out.write(definition + "\n")
 
 
 def to_slob(in_path, out_path):
