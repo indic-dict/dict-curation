@@ -4,3 +4,4 @@ A package for curating doc file collections, with ability to sync with youtube a
 from collections import namedtuple
 
 Definition = namedtuple(typename="Definition", field_names=["headwords_tuple", "meaning"])
+
