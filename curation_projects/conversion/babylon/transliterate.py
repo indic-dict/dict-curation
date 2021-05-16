@@ -56,7 +56,11 @@ def process_dir(source_script, dest_script, source_dir, dest_dir=None, pre_optio
     subdir_path = os.path.join(source_dir, subdir)
     if os.path.isdir(subdir_path):
       dest_dict_name = "%s_%s" % (subdir, dest_dir_suffix)
-      convert_with_aksharamukha(source_path=os.path.join(subdir_path, subdir + ".babylon"), dest_path=os.path.join(dest_dir, dest_dict_name, dest_dict_name + ".babylon"), source_script=source_script, dest_script=dest_script, pre_options=pre_options, post_options=post_options)
+      source_dict_path = os.path.join(subdir_path, subdir + ".babylon")
+      if os.path.exists(source_dict_path):
+        convert_with_aksharamukha(source_path=source_dict_path, dest_path=os.path.join(dest_dir, dest_dict_name, dest_dict_name + ".babylon"), source_script=source_script, dest_script=dest_script, pre_options=pre_options, post_options=post_options)
+      else:
+        logging.warning("did not find %s", source_dict_path)
 
 
 def process_oriya_dicts():
@@ -71,9 +75,13 @@ def process_panjabi_dicts():
   process_dir(source_script=GeneralMap.GURMUKHI, dest_script=GeneralMap.DEVANAGARI, source_dir="/home/vvasuki/indic-dict/stardict-panjabi/pa-head/en-entries", dest_dir="/home/vvasuki/indic-dict/stardict-panjabi/pa-head_dev-script/en-entries")
 
 def process_bengali_dicts():
-  process_dir(source_script=GeneralMap.BENGALI, dest_script=GeneralMap.DEVANAGARI, source_dir="/home/vvasuki/indic-dict/stardict-bengali/bn-head/en-entries", dest_dir="/home/vvasuki/indic-dict/stardict-panjabi/bn-head_dev-script/en-entries")
-  process_dir(source_script=GeneralMap.BENGALI, dest_script=GeneralMap.DEVANAGARI, source_dir="/home/vvasuki/indic-dict/stardict-bengali/bn-head/bn-entries", dest_dir="/home/vvasuki/indic-dict/stardict-panjabi/bn-head_dev-script/bn-entries")
+  process_dir(source_script=GeneralMap.BENGALI, dest_script=GeneralMap.DEVANAGARI, source_dir="/home/vvasuki/indic-dict/stardict-bengali/bn-head/en-entries", dest_dir="/home/vvasuki/indic-dict/stardict-bengali/bn-head_dev-script/en-entries")
+  process_dir(source_script=GeneralMap.BENGALI, dest_script=GeneralMap.DEVANAGARI, source_dir="/home/vvasuki/indic-dict/stardict-bengali/bn-head/bn-entries", dest_dir="/home/vvasuki/indic-dict/stardict-bengali/bn-head_dev-script/bn-entries")
 
+
+def process_as_dicts():
+  process_dir(source_script=GeneralMap.ASSAMESE, dest_script=GeneralMap.DEVANAGARI, source_dir="/home/vvasuki/indic-dict/stardict-assamese/as-head/en-entries", dest_dir="/home/vvasuki/indic-dict/stardict-assamese/as-head_dev-script/en-entries")
+  # process_dir(source_script=GeneralMap.ASSAMESE, dest_script=GeneralMap.DEVANAGARI, source_dir="/home/vvasuki/indic-dict/stardict-assamese/as-head/as-entries", dest_dir="/home/vvasuki/indic-dict/stardict-assamese/as-head_dev-script/as-entries")
 
 def process_ml_dicts():
   process_dir(source_script="Malayalam", dest_script="ISO", source_dir="/home/vvasuki/indic-dict/stardict-malayalam/en-head")
@@ -85,6 +93,16 @@ def process_ml_dicts():
   process_dir(source_script="Malayalam", dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir)
 
 
+def process_te_dicts():
+  # process_dir(source_script=GeneralMap.TELUGU, dest_script="ISO", source_dir="/home/vvasuki/indic-dict/stardict-telugu/en-head")
+  # 
+  # remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-telugu/te-head/janapada/janapada.babylon")
+  # remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-telugu/te-head/wiktionary_telugu/wiktionary_telugu.babylon")
+  # 
+  source_dir = "/home/vvasuki/indic-dict/stardict-telugu/te-head/"
+  process_dir(source_script=GeneralMap.TELUGU, dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir)
+
+
 def process_tamil_dicts():
   pre_options = ["TamilTranscribe"]
   source_dir = "/home/vvasuki/indic-dict/stardict-tamil/ta-head/"
@@ -94,4 +112,5 @@ def process_tamil_dicts():
 
 
 if __name__ == '__main__':
-  process_panjabi_dicts()
+  # process_te_dicts()
+  process_as_dicts()
