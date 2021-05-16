@@ -1,7 +1,9 @@
 import codecs
+import os
 import subprocess
 
 import aksharamukha.transliterate
+import regex
 import tqdm
 import logging
 
@@ -15,6 +17,7 @@ logging.basicConfig(
 
 def convert_with_aksharamukha(source_path, dest_path, source_script, dest_script, pre_options = [], post_options = []):
   logging.info("\nTransliterating (%s > %s) %s to %s", source_script, dest_script, source_path, dest_path)
+  os.makedirs(os.path.dirname(dest_path), exist_ok=True)
   with codecs.open(source_path, "r", "utf-8") as in_file, codecs.open(dest_path, "w", "utf-8") as out_file:
     progress_bar = tqdm.tqdm(total=int(subprocess.check_output(['wc', '-l', source_path]).split()[0]), desc="Lines", position=0)
     for line in in_file:
@@ -23,9 +26,35 @@ def convert_with_aksharamukha(source_path, dest_path, source_script, dest_script
       progress_bar.update(1)
 
 
+def remove_devanagari_headwords(source_path):
+  logging.info("\nremove_devanagari_headwords %s", source_path)
+  with codecs.open(source_path, "r", "utf-8") as in_file, codecs.open(source_path + ".tmp", "w", "utf-8") as out_file:
+    progress_bar = tqdm.tqdm(total=int(subprocess.check_output(['wc', '-l', source_path]).split()[0]), desc="Lines", position=0)
+    for line in in_file:
+      if "|" in line:
+        line = line.replace("‍", "").replace("~", "")
+        headwords = line.split("|")
+        filtered_headwords = [headword for headword in headwords if not regex.search(r"[ऀ-ॿ]", headword)]
+        dest_line = "|".join(filtered_headwords)
+      else:
+        dest_line = line
+      out_file.write(dest_line)
+      progress_bar.update(1)
+
+
 def process_ml_dicts():
-  convert_with_aksharamukha(source_path="/home/vvasuki/indic-dict/stardict-malayalam/en-head/olam-enml/olam-enml.babylon", dest_path="/home/vvasuki/indic-dict/stardict-malayalam/en-head_en-script/olam-enml_en-script/olam-enml_en-script.babylon", source_script="Malayalam", dest_script="ISO")
-  convert_with_aksharamukha(source_path="/home/vvasuki/indic-dict/stardict-malayalam/en-head/olam-enml/olam-enml.babylon", dest_path="/home/vvasuki/indic-dict/stardict-malayalam/en-head_en-script/olam-enml_en-script/olam-enml_en-script.babylon", source_script="Malayalam", dest_script="ISO")
+  # convert_with_aksharamukha(source_path="/home/vvasuki/indic-dict/stardict-malayalam/en-head/olam-enml/olam-enml.babylon", dest_path="/home/vvasuki/indic-dict/stardict-malayalam/en-head_en-script/olam-enml_en-script/olam-enml_en-script.babylon", source_script="Malayalam", dest_script="ISO")
+  # remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-malayalam/ml-head/datuk/datuk.babylon")
+  # remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-malayalam/ml-head/gundert/gundert.babylon")
+  # 
+  source_dir = "/home/vvasuki/indic-dict/stardict-malayalam/ml-head/"
+  dest_dir = "/home/vvasuki/indic-dict/stardict-malayalam/ml-head_dev/"
+  
+  for subdir in os.listdir(source_dir):
+    subdir_path = os.path.join(source_dir, subdir)
+    if os.path.isdir(subdir_path):
+      dest_dict_name = subdir + "_dev"
+      convert_with_aksharamukha(source_path=os.path.join(subdir_path, subdir + ".babylon"), dest_path=os.path.join(dest_dir, dest_dict_name, dest_dict_name + ".babylon"), source_script="Malayalam", dest_script="Devanagari")
 
 
 def process_tamil_dicts():
