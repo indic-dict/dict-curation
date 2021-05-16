@@ -33,7 +33,7 @@ def remove_devanagari_headwords(source_path):
   with codecs.open(source_path, "r", "utf-8") as in_file, codecs.open(source_path + ".tmp", "w", "utf-8") as out_file:
     progress_bar = tqdm.tqdm(total=int(subprocess.check_output(['wc', '-l', source_path]).split()[0]), desc="Lines", position=0)
     for line in in_file:
-      if "|" in line:
+      if "|" in line and not line.startswith("|"):
         # line = line.replace("‍", "").replace("~", "")
         headwords = line.split("|")
         filtered_headwords = [headword for headword in headwords if not regex.search(r"[ऀ-ॿ]", headword)]
@@ -44,10 +44,10 @@ def remove_devanagari_headwords(source_path):
       progress_bar.update(1)
 
 
-def process_dir(source_script, dest_script, source_dir, dest_dir=None, pre_options=[], post_options=[]):
+def process_dir(source_script, dest_script, source_dir, dest_dir=None, pre_options=[], post_options=[], overwrite=False):
   SCRIPT_TO_SUFFIX = {GeneralMap.DEVANAGARI: "dev", "ISO": "en"}
   dest_dir_suffix = SCRIPT_TO_SUFFIX[dest_script]
-  
+  source_dir = source_dir.rstrip("/")
   if dest_dir is None:
     dest_dir_base =  "%s_%s-script" % (os.path.basename(source_dir),dest_dir_suffix)
     dest_dir = os.path.join(os.path.dirname(source_dir), dest_dir_base)
@@ -58,7 +58,11 @@ def process_dir(source_script, dest_script, source_dir, dest_dir=None, pre_optio
       dest_dict_name = "%s_%s" % (subdir, dest_dir_suffix)
       source_dict_path = os.path.join(subdir_path, subdir + ".babylon")
       if os.path.exists(source_dict_path):
-        convert_with_aksharamukha(source_path=source_dict_path, dest_path=os.path.join(dest_dir, dest_dict_name, dest_dict_name + ".babylon"), source_script=source_script, dest_script=dest_script, pre_options=pre_options, post_options=post_options)
+        dest_path = os.path.join(dest_dir, dest_dict_name, dest_dict_name + ".babylon")
+        if not os.path.exists(dest_path) or overwrite:
+          convert_with_aksharamukha(source_path=source_dict_path, dest_path=dest_path, source_script=source_script, dest_script=dest_script, pre_options=pre_options, post_options=post_options)
+        else:
+          logging.info("Skipping %s as it exists", dest_path)
       else:
         logging.warning("did not find %s", source_dict_path)
 
@@ -112,5 +116,5 @@ def process_tamil_dicts():
 
 
 if __name__ == '__main__':
-  # process_te_dicts()
-  process_as_dicts()
+  process_te_dicts()
+  # process_as_dicts()
