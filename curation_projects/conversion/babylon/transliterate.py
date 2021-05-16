@@ -84,13 +84,13 @@ def process_as_dicts():
   # process_dir(source_script=GeneralMap.ASSAMESE, dest_script=GeneralMap.DEVANAGARI, source_dir="/home/vvasuki/indic-dict/stardict-assamese/as-head/as-entries", dest_dir="/home/vvasuki/indic-dict/stardict-assamese/as-head_dev-script/as-entries")
 
 def process_ml_dicts():
-  process_dir(source_script="Malayalam", dest_script="ISO", source_dir="/home/vvasuki/indic-dict/stardict-malayalam/en-head")
+  process_dir(source_script=GeneralMap.MALAYALAM, dest_script=GeneralMap.ISO, source_dir="/home/vvasuki/indic-dict/stardict-malayalam/en-head")
  
   # remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-malayalam/ml-head/datuk/datuk.babylon")
   # remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-malayalam/ml-head/gundert/gundert.babylon")
   # 
   source_dir = "/home/vvasuki/indic-dict/stardict-malayalam/ml-head/"
-  process_dir(source_script="Malayalam", dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir)
+  process_dir(source_script=GeneralMap.MALAYALAM, dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir)
 
 
 def process_te_dicts():
