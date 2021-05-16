@@ -42,19 +42,33 @@ def remove_devanagari_headwords(source_path):
       progress_bar.update(1)
 
 
-def process_ml_dicts():
-  # convert_with_aksharamukha(source_path="/home/vvasuki/indic-dict/stardict-malayalam/en-head/olam-enml/olam-enml.babylon", dest_path="/home/vvasuki/indic-dict/stardict-malayalam/en-head_en-script/olam-enml_en-script/olam-enml_en-script.babylon", source_script="Malayalam", dest_script="ISO")
-  # remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-malayalam/ml-head/datuk/datuk.babylon")
-  # remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-malayalam/ml-head/gundert/gundert.babylon")
-  # 
-  source_dir = "/home/vvasuki/indic-dict/stardict-malayalam/ml-head/"
-  dest_dir = "/home/vvasuki/indic-dict/stardict-malayalam/ml-head_dev/"
+def process_dir(source_script, dest_script, source_dir, dest_dir=None):
+  SCRIPT_TO_SUFFIX = {"Devanagari": "dev", "ISO": "en"}
+  dest_dir_suffix = SCRIPT_TO_SUFFIX[dest_script]
+  
+  if dest_dir is None:
+    dest_dir_base =  "%s_%s" % (os.path.basename(source_dir),dest_dir_suffix)
+    dest_dir = os.path.join(os.path.dirname(source_dir), dest_dir_base)
   
   for subdir in os.listdir(source_dir):
     subdir_path = os.path.join(source_dir, subdir)
     if os.path.isdir(subdir_path):
-      dest_dict_name = subdir + "_dev"
-      convert_with_aksharamukha(source_path=os.path.join(subdir_path, subdir + ".babylon"), dest_path=os.path.join(dest_dir, dest_dict_name, dest_dict_name + ".babylon"), source_script="Malayalam", dest_script="Devanagari")
+      dest_dict_name = "%s_%s" % (subdir, dest_dir_suffix)
+      convert_with_aksharamukha(source_path=os.path.join(subdir_path, subdir + ".babylon"), dest_path=os.path.join(dest_dir, dest_dict_name, dest_dict_name + ".babylon"), source_script=source_script, dest_script="dest_script")
+
+
+def process_oriya_dicts():
+  process_dir(source_script="Oriya", dest_script="Devanagari", source_dir="/home/vvasuki/indic-dict/stardict-oriya/or-head")
+
+
+def process_ml_dicts():
+  process_dir(source_script="Malayalam", dest_script="ISO", source_dir="/home/vvasuki/indic-dict/stardict-malayalam/en-head")
+ 
+  # remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-malayalam/ml-head/datuk/datuk.babylon")
+  # remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-malayalam/ml-head/gundert/gundert.babylon")
+  # 
+  source_dir = "/home/vvasuki/indic-dict/stardict-malayalam/ml-head/"
+  process_dir(source_script="Malayalam", dest_script="Devanagari", source_dir=source_dir)
 
 
 def process_tamil_dicts():
@@ -67,4 +81,4 @@ def process_tamil_dicts():
 
 
 if __name__ == '__main__':
-  process_ml_dicts()
+  process_oriya_dicts()
