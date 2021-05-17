@@ -28,12 +28,13 @@ def convert_with_aksharamukha(source_path, dest_path, source_script, dest_script
       progress_bar.update(1)
 
 
-def remove_devanagari_headwords(source_path):
+def remove_devanagari_headwords(source_path, line_1_index=1):
   logging.info("\nremove_devanagari_headwords %s", source_path)
   with codecs.open(source_path, "r", "utf-8") as in_file, codecs.open(source_path + ".tmp", "w", "utf-8") as out_file:
     progress_bar = tqdm.tqdm(total=int(subprocess.check_output(['wc', '-l', source_path]).split()[0]), desc="Lines", position=0)
+    line_number = 1
     for line in in_file:
-      if "|" in line and not line.startswith("|"):
+      if "|" in line and line_number >= line_1_index and (line_number - line_1_index) % 3 == 0:
         # line = line.replace("‍", "").replace("~", "")
         headwords = line.split("|")
         filtered_headwords = [headword for headword in headwords if not regex.search(r"[ऀ-ॿ]", headword)]
@@ -42,6 +43,7 @@ def remove_devanagari_headwords(source_path):
         dest_line = line
       out_file.write(dest_line)
       progress_bar.update(1)
+      line_number = line_number + 1
 
 
 def process_dir(source_script, dest_script, source_dir, dest_dir=None, pre_options=[], post_options=[], overwrite=False):
