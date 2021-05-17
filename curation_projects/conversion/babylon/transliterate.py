@@ -105,7 +105,7 @@ def process_te_dicts():
   # process_dir(source_script=GeneralMap.TELUGU, dest_script="ISO", source_dir="/home/vvasuki/indic-dict/stardict-telugu/en-head")
   # 
   # remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-telugu/te-head/janapada/janapada.babylon")
-  remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-telugu/te-head/wiktionary_telugu/wiktionary_telugu.babylon")
+  # remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-telugu/te-head/wiktionary_telugu/wiktionary_telugu.babylon")
   # 
   source_dir = "/home/vvasuki/indic-dict/stardict-telugu/te-head/"
   process_dir(source_script=GeneralMap.TELUGU, dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir)
