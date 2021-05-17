@@ -39,6 +39,8 @@ def remove_devanagari_headwords(source_path, line_1_index=1):
         headwords = line.split("|")
         filtered_headwords = [headword for headword in headwords if not regex.search(r"[ऀ-ॿ]", headword)]
         dest_line = "|".join(filtered_headwords)
+        if not dest_line.endswith("\n"):
+          dest_line = dest_line + "\n"
       else:
         dest_line = line
       out_file.write(dest_line)
@@ -93,7 +95,7 @@ def process_ml_dicts():
   process_dir(source_script=GeneralMap.MALAYALAM, dest_script=GeneralMap.ISO, source_dir="/home/vvasuki/indic-dict/stardict-malayalam/en-head")
  
   # remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-malayalam/ml-head/datuk/datuk.babylon")
-  # remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-malayalam/ml-head/gundert/gundert.babylon")
+  remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-malayalam/ml-head/gundert/gundert.babylon")
   # 
   source_dir = "/home/vvasuki/indic-dict/stardict-malayalam/ml-head/"
   process_dir(source_script=GeneralMap.MALAYALAM, dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir)
@@ -103,7 +105,7 @@ def process_te_dicts():
   # process_dir(source_script=GeneralMap.TELUGU, dest_script="ISO", source_dir="/home/vvasuki/indic-dict/stardict-telugu/en-head")
   # 
   # remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-telugu/te-head/janapada/janapada.babylon")
-  # remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-telugu/te-head/wiktionary_telugu/wiktionary_telugu.babylon")
+  remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-telugu/te-head/wiktionary_telugu/wiktionary_telugu.babylon")
   # 
   source_dir = "/home/vvasuki/indic-dict/stardict-telugu/te-head/"
   process_dir(source_script=GeneralMap.TELUGU, dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir)
