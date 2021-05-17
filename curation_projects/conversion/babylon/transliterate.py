@@ -120,5 +120,5 @@ def process_tamil_dicts():
 
 
 if __name__ == '__main__':
-  process_te_dicts()
+  process_tamil_dicts()
   # process_as_dicts()
