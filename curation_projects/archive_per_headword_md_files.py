@@ -13,5 +13,6 @@ def update_dictionary_collection(collection_name):
   item = ArchiveItem(archive_id="definition-tree-sanskrit", metadata=metadata, repo_base="/home/vvasuki/indic-dict/definition-tree-%s" % collection_name)
   item.update_from_dir(file_pattern="*.md")
 
+
 if __name__ == '__main__':
     update_dictionary_collection(collection_name="sanskrit")
