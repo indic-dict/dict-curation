@@ -3,7 +3,7 @@ import os
 
 import regex
 
-import doc_curation.scraping.html.selenium
+import doc_curation.scraping.html_scraper.selenium
 from dict_curation import babylon
 from doc_curation.scraping import parankusha
 
@@ -38,12 +38,12 @@ def get_entries(browser, outfile):
 
 
 def get_dict(browser, outfile_path, start_nodes=["अ--उह्र", "अ--अग्निनक्षत्र"]):
-    doc_curation.scraping.html.selenium.click_link_by_text(browser=browser, element_text="विद्यास्थानानि")
-    doc_curation.scraping.html.selenium.click_link_by_text(browser=browser, element_text="संस्कृत-कन्नड-कोशः")
-    doc_curation.scraping.html.selenium.click_link_by_text(browser=browser, element_text="शब्दार्थ-कौस्तुभः")
+    doc_curation.scraping.html_scraper.selenium.click_link_by_text(browser=browser, element_text="विद्यास्थानानि")
+    doc_curation.scraping.html_scraper.selenium.click_link_by_text(browser=browser, element_text="संस्कृत-कन्नड-कोशः")
+    doc_curation.scraping.html_scraper.selenium.click_link_by_text(browser=browser, element_text="शब्दार्थ-कौस्तुभः")
     browser.execute_script("TreeView_ToggleNode(tv_Data,383,document.getElementById('tvn383'),' ',document.getElementById('tvn383Nodes'))")
-    doc_curation.scraping.html.selenium.click_link_by_text(browser=browser, element_text=start_nodes[0])
-    doc_curation.scraping.html.selenium.click_link_by_text(browser=browser, element_text=start_nodes[1])
+    doc_curation.scraping.html_scraper.selenium.click_link_by_text(browser=browser, element_text=start_nodes[0])
+    doc_curation.scraping.html_scraper.selenium.click_link_by_text(browser=browser, element_text=start_nodes[1])
     os.makedirs(name=os.path.dirname(outfile_path), exist_ok=True)
     if start_nodes[0] == "अ--उह्र" and start_nodes[1] == "अ--अग्निनक्षत्र":
         os.remove(outfile_path)
@@ -58,7 +58,7 @@ def get_dict(browser, outfile_path, start_nodes=["अ--उह्र", "अ--अ�
     
             """)
         get_entries(browser, outfile)
-        while doc_curation.scraping.html.selenium.click_link_by_text(browser=browser, element_text="Next"):
+        while doc_curation.scraping.html_scraper.selenium.click_link_by_text(browser=browser, element_text="Next"):
             get_entries(browser, outfile)
         
 
