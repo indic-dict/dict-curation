@@ -23,7 +23,7 @@ logging.basicConfig(
 
 
 def get_letter_headwords(letter, out_path_dir):
-    browser = scraping.get_selenium_browser(headless=True)
+    browser = scraping.get_selenium_chrome(headless=True)
     out_path = os.path.join(out_path_dir, letter + ".csv")
     if os.path.exists(out_path):
         logging.warning("Skipping %s as %s exists", letter, out_path)
