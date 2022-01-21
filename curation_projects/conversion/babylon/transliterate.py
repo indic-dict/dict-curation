@@ -196,5 +196,6 @@ if __name__ == '__main__':
   # process_tamil_dicts()
   # process_bengali_dicts()
   # process_divehi_dicts()
-  fix_kittel()
+  process_kannada_dicts()
+  # fix_kittel()
   
