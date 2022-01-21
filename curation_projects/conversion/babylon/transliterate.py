@@ -62,9 +62,9 @@ def add_devanagari_headwords(source_path, source_script, pre_options=[], line_1_
     progress_bar = tqdm.tqdm(total=int(subprocess.check_output(['wc', '-l', source_path]).split()[0]), desc="Lines", position=0)
     line_number = 1
     for line in in_file:
-      if "|" in line and line_number >= line_1_index and (line_number - line_1_index) % 3 == 0:
+      if line_number >= line_1_index and (line_number - line_1_index) % 3 == 0:
         # line = line.replace("‍", "").replace("~", "")
-        headwords = line.split("|")
+        headwords = line.strip().split("|")
         devanagari_headwords = [aksharamukha.transliterate.process(src=source_script, tgt="Devanagari", txt=headword, nativize = True, pre_options = pre_options) for headword in headwords]
         dest_line = "|".join(headwords + devanagari_headwords)
         if not dest_line.endswith("\n"):
@@ -86,10 +86,10 @@ def add_lazy_anusvaara_headwords(source_path, source_script, line_1_index=1, ):
     progress_bar = tqdm.tqdm(total=int(subprocess.check_output(['wc', '-l', source_path]).split()[0]), desc="Lines", position=0)
     line_number = 1
     for line in in_file:
-      if "|" in line and line_number >= line_1_index and (line_number - line_1_index) % 3 == 0:
+      if line_number >= line_1_index and (line_number - line_1_index) % 3 == 0:
         # line = line.replace("‍", "").replace("~", "")
-        headwords = line.split("|")
-        new_headwords = [sanscript.schemes[source_script].force_lazy_anusvaara(headword) for headword in headwords]
+        headwords = line.strip().split("|")
+        new_headwords = [sanscript.SCHEMES[source_script].force_lazy_anusvaara(headword) for headword in headwords]
         dest_line = "|".join(set(headwords + new_headwords))
         if not dest_line.endswith("\n"):
           dest_line = dest_line + "\n"
@@ -173,6 +173,15 @@ def process_tamil_dicts():
   process_dir(source_script="Tamil", dest_script="ISO", source_dir=source_dir, pre_options=pre_options)
 
 
+
+def process_kannada_dicts():
+  pre_options = []
+  source_dir = "/home/vvasuki/indic-dict/stardict-kannada/kn-head/kn-entries"
+  process_dir(source_script="Kannada", dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir, pre_options=pre_options)
+  source_dir = "/home/vvasuki/indic-dict/stardict-kannada/en-head/"
+  process_dir(source_script="Kannada", dest_script="ISO", source_dir=source_dir, pre_options=pre_options)
+
+
 def process_divehi_dicts():
   source_path = "/home/vvasuki/indic-dict/stardict-divehi/dv-head/en-entries/maniku/maniku.babylon"
   add_devanagari_headwords(source_script="Thaana", source_path=source_path)
@@ -180,7 +189,7 @@ def process_divehi_dicts():
 
 def fix_kittel():
   source_path = "/home/vvasuki/indic-dict/stardict-kannada/kn-head/en-entries/kittel/kittel.babylon"
-  add_lazy_anusvaara_headwords(source_script="Kannada", source_path=source_path)
+  add_lazy_anusvaara_headwords(source_script="kannada", source_path=source_path)
 
 
 if __name__ == '__main__':
