@@ -1,13 +1,20 @@
 import codecs
 import os
+import shutil
 import subprocess
 
 import aksharamukha.transliterate
+import indic_transliteration
 import regex
 import tqdm
 import logging
 
 from aksharamukha import GeneralMap
+from indic_transliteration import sanscript
+
+GeneralMap.DEVANAGARI = "Devanagari"
+GeneralMap.BENGALI = "Bengali"
+GeneralMap.TAMIL = "Tamil"
 
 for handler in logging.root.handlers[:]:
   logging.root.removeHandler(handler)
@@ -46,6 +53,53 @@ def remove_devanagari_headwords(source_path, line_1_index=1):
       out_file.write(dest_line)
       progress_bar.update(1)
       line_number = line_number + 1
+
+
+def add_devanagari_headwords(source_path, source_script, pre_options=[], line_1_index=1, ):
+  logging.info("\nadd_devanagari_headwords %s", source_path)
+  tmp_path = source_path + ".tmp"
+  with codecs.open(source_path, "r", "utf-8") as in_file, codecs.open(tmp_path, "w", "utf-8") as out_file:
+    progress_bar = tqdm.tqdm(total=int(subprocess.check_output(['wc', '-l', source_path]).split()[0]), desc="Lines", position=0)
+    line_number = 1
+    for line in in_file:
+      if "|" in line and line_number >= line_1_index and (line_number - line_1_index) % 3 == 0:
+        # line = line.replace("‍", "").replace("~", "")
+        headwords = line.split("|")
+        devanagari_headwords = [aksharamukha.transliterate.process(src=source_script, tgt="Devanagari", txt=headword, nativize = True, pre_options = pre_options) for headword in headwords]
+        dest_line = "|".join(headwords + devanagari_headwords)
+        if not dest_line.endswith("\n"):
+          dest_line = dest_line + "\n"
+      else:
+        dest_line = line
+      out_file.write(dest_line)
+      progress_bar.update(1)
+      line_number = line_number + 1
+  os.remove(source_path)
+  shutil.move(tmp_path, source_path)
+
+
+
+def add_lazy_anusvaara_headwords(source_path, source_script, line_1_index=1, ):
+  logging.info("\nadd_lazy_anusvaara_headwords %s", source_path)
+  tmp_path = source_path + ".tmp"
+  with codecs.open(source_path, "r", "utf-8") as in_file, codecs.open(tmp_path, "w", "utf-8") as out_file:
+    progress_bar = tqdm.tqdm(total=int(subprocess.check_output(['wc', '-l', source_path]).split()[0]), desc="Lines", position=0)
+    line_number = 1
+    for line in in_file:
+      if "|" in line and line_number >= line_1_index and (line_number - line_1_index) % 3 == 0:
+        # line = line.replace("‍", "").replace("~", "")
+        headwords = line.split("|")
+        new_headwords = [sanscript.schemes[source_script].force_lazy_anusvaara(headword) for headword in headwords]
+        dest_line = "|".join(set(headwords + new_headwords))
+        if not dest_line.endswith("\n"):
+          dest_line = dest_line + "\n"
+      else:
+        dest_line = line
+      out_file.write(dest_line)
+      progress_bar.update(1)
+      line_number = line_number + 1
+  os.remove(source_path)
+  shutil.move(tmp_path, source_path)
 
 
 def process_dir(source_script, dest_script, source_dir, dest_dir=None, pre_options=[], post_options=[], overwrite=False):
@@ -119,6 +173,19 @@ def process_tamil_dicts():
   process_dir(source_script="Tamil", dest_script="ISO", source_dir=source_dir, pre_options=pre_options)
 
 
+def process_divehi_dicts():
+  source_path = "/home/vvasuki/indic-dict/stardict-divehi/dv-head/en-entries/maniku/maniku.babylon"
+  add_devanagari_headwords(source_script="Thaana", source_path=source_path)
+
+
+def fix_kittel():
+  source_path = "/home/vvasuki/indic-dict/stardict-kannada/kn-head/en-entries/kittel/kittel.babylon"
+  add_lazy_anusvaara_headwords(source_script="Kannada", source_path=source_path)
+
+
 if __name__ == '__main__':
-  process_tamil_dicts()
-  # process_as_dicts()
+  # process_tamil_dicts()
+  # process_bengali_dicts()
+  # process_divehi_dicts()
+  fix_kittel()
+  
