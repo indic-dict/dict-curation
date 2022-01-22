@@ -5,9 +5,14 @@ import langcodes
 import regex
 
 
+language_code_map = {"ayurveda": "sa", "prakrit": "pi", "test": "en"}
+
+
 def get_main_language(file_path):
   matches = regex.findall("stardict[-_][^/]+", str(file_path))
   main_langage = matches[-1][len("stardict-"):]
+  if main_langage in language_code_map:
+    main_langage = language_code_map[main_langage]
   return main_langage
 
 
@@ -55,7 +60,7 @@ def get_language_pair_string(file_path, dest_language=None, src_language=None):
 
 def deduce_entry_language(file_path):
   main_language = get_main_language(file_path=file_path)
-  entries_matches = regex.findall("[^/-]+-entries", str(file_path))
+  entries_matches = regex.findall("[^/-_]+[_-]entries", str(file_path))
   if len(entries_matches) > 0:
     dest_language = entries_matches[0][:-len("-entries")]
     if dest_language.startswith("other"):
@@ -67,12 +72,11 @@ def deduce_entry_language(file_path):
 
 def deduce_source_language(file_path):
   main_language = get_main_language(file_path=file_path)
-  matches = regex.findall("[^/]+-head", str(file_path))
+  matches = regex.findall("[^/-_]+[-_]head", str(file_path))
   if len(matches) > 0:
     src_language = matches[0][:-len("-head")]
   else:
     src_language = main_language
-  language_code_map = {"ayurveda": "sa", "prakrit": "pi", "test": "en"}
   if src_language in language_code_map:
     src_language = language_code_map[src_language]
   return src_language
