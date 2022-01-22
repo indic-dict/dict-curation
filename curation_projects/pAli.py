@@ -5,7 +5,7 @@ import os
 
 import pandas
 
-import dict_curation.babylon.transliterate
+import dict_curation.babylon.lipi
 from dict_curation import babylon
 # Remove all handlers associated with the root logger object.
 for handler in logging.root.handlers[:]:

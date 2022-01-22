@@ -7,13 +7,11 @@ def get_headers(file_path):
   with codecs.open(file_path, "r", 'utf-8') as file_in:
     headers = defaultdict()
     line = file_in.readline()
-    if line.strip() == "":
+    if line.strip() != "":
+      # A dict without headers
       return headers
     for line in file_in:
       line = line.strip()
-      if line != "" and not line.startswith("#"):
-        # A dict without headers
-        return headers
       if len(headers) > 0 and not line.startswith("#"):
         # All headers read
         assert line == "", file_path
