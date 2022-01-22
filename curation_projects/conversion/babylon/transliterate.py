@@ -167,8 +167,12 @@ def process_te_dicts():
 
 def process_tamil_dicts():
   pre_options = ["TamilTranscribe"]
-  source_dir = "/home/vvasuki/indic-dict/stardict-tamil/ta-head/"
+  source_dir = "/home/vvasuki/indic-dict/stardict-tamil/ta-head/en-entries"
   process_dir(source_script="Tamil", dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir, pre_options=pre_options)
+
+  source_dir = "/home/vvasuki/indic-dict/stardict-tamil/ta-head/ta-entries"
+  process_dir(source_script="Tamil", dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir, pre_options=pre_options)
+
   source_dir = "/home/vvasuki/indic-dict/stardict-tamil/en-head/"
   process_dir(source_script="Tamil", dest_script="ISO", source_dir=source_dir, pre_options=pre_options)
 
@@ -193,9 +197,10 @@ def fix_kittel():
 
 
 if __name__ == '__main__':
-  # process_tamil_dicts()
+  process_tamil_dicts()
   # process_bengali_dicts()
   # process_divehi_dicts()
-  process_kannada_dicts()
+  # process_kannada_dicts()
   # fix_kittel()
+  pass
   
