@@ -3,6 +3,7 @@ import logging
 import os
 from pathlib import Path
 
+import regex
 from curation_utils import file_helper
 from tqdm import tqdm
 
@@ -39,3 +40,32 @@ def split_to_babylon_segements(file_path, out_path_dir=None):
     out_path = os.path.join(out_path_dir, file_helper.clean_file_name(headword + ".babylon"))
     with codecs.open(out_path, "w", 'utf-8') as file_out:
       file_out.writelines(["%s\n%s\n\n" % (headword, definition)])
+      
+
+def set_languages(file_path, src_language=None, dest_language=None):
+  import langcodes
+  if src_language is None:
+    matches = regex.findall("[^/]+-head", file_path)
+    if len(matches) > 0:
+      src_language = matches[0][:-len("-head")]
+    else:
+      matches = regex.findall("stardict-[^/]+", file_path)
+      src_language = matches[0][len("stardict-"):]
+    if len(src_language) > 2:
+      src_language = langcodes.standardize_tag(langcodes.find(src_language))
+  if dest_language is None:
+    entries_matches = regex.findall("[^/]+-entries", file_path)
+    if len(entries_matches) > 0:
+      dest_language = entries_matches[0][:-len("-entries")]
+      if len(dest_language) > 2:
+        dest_language = langcodes.standardize_tag(langcodes.find(dest_language))
+    else:
+      dest_language = src_language
+  logging.info("%s (%s-%s)", file_path, src_language, dest_language)
+
+  from dict_curation.babylon import header_helper
+  headers = header_helper.get_headers(file_path=file_path)
+  headers["bookname"] = headers.get("bookname", os.path.basename(file_path).replace(".babylon_final", "").replace(".babylon", ""))
+  headers["bookname"] = "%s (%s-%s)" % (headers["bookname"], src_language, dest_language)
+  
+  header_helper.set_headers(file_path=file_path, headers=headers)
