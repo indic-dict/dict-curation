@@ -9,7 +9,6 @@ from dict_curation import Definition
 import logging
 
 # Remove all handlers associated with the root logger object.
-from dict_curation.babylon.cleaner import fix_newlines
 
 for handler in logging.root.handlers[:]:
   logging.root.removeHandler(handler)
@@ -48,6 +47,7 @@ def get_definitions(in_path, do_fix_newlines=False):
     lines = file_in.readlines()
     lines = list(itertools.dropwhile(lambda x: x.strip() == "" or x.startswith("#"), lines))
     if do_fix_newlines:
+      from dict_curation.babylon.cleaner import fix_newlines
       lines = fix_newlines(lines=lines)
       with codecs.open(in_path + "_fixed", "w", 'utf-8') as file_out:
         file_out.writelines(lines)
