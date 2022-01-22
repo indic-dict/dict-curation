@@ -5,6 +5,7 @@ import os
 
 import pandas
 
+import dict_curation.babylon.transliterate
 from dict_curation import babylon
 # Remove all handlers associated with the root logger object.
 for handler in logging.root.handlers[:]:
@@ -28,7 +29,7 @@ def from_combined_source(dict_id, out_path):
     with codecs.open(out_path, "w", 'utf-8') as file_out:
         process_file(csv_in="/home/vvasuki/paali-bhaasaa/raw_etexts/kosha/dict_words_1.csv")
         process_file(csv_in="/home/vvasuki/paali-bhaasaa/raw_etexts/kosha/dict_words_2.csv")
-    babylon.transliterate_headword(file_path=out_path, dry_run=False)
+    dict_curation.babylon.transliterate.transliterate_headword_with_sanscript(file_path=out_path, dry_run=False)
 
 
 if __name__ == '__main__':

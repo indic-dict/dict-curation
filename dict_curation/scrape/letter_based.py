@@ -6,6 +6,7 @@ from multiprocessing import Pool
 
 from curation_utils import file_helper, scraping
 
+import dict_curation.babylon.cleaner
 from dict_curation import babylon
 
 for handler in logging.root.handlers[:]:
@@ -58,7 +59,7 @@ def dump_letter_definitions(letter, in_path_dir, out_path_dir, get_definition):
   empty_count = 0
   skipped_count = 0
   out_path_dir = os.path.join(out_path_dir, letter)
-  babylon.split_to_babylon_segements(file_path=out_path_dir + ".babylon")
+  dict_curation.babylon.cleaner.split_to_babylon_segements(file_path=out_path_dir + ".babylon")
   with codecs.open(in_path, "r", 'utf-8') as file_in:
     headword_details = file_in.readlines()
     from tqdm.contrib.concurrent import process_map  # or thread_map
@@ -71,7 +72,7 @@ def dump_letter_definitions(letter, in_path_dir, out_path_dir, get_definition):
       elif result == "SKIPPED":
         skipped_count += 1
 
-  babylon.join_babylon_segments_in_dir(out_path_dir=out_path_dir, glob_pattern="*.babylon")
+  dict_curation.babylon.cleaner.join_babylon_segments_in_dir(out_path_dir=out_path_dir, glob_pattern="*.babylon")
   return (count, empty_count)
 
 
@@ -80,4 +81,4 @@ def dump_definitions(letters, in_path_dir, out_path_dir, get_definition):
   # dump_letter_definitions("A", in_path_dir, out_path_dir)
   for letter in letters:
     dump_letter_definitions(letter=letter, in_path_dir=in_path_dir, out_path_dir=out_path_dir, get_definition=get_definition)
-  babylon.join_babylon_segments_in_dir(out_path_dir=out_path_dir, glob_pattern="*.babylon")
+  dict_curation.babylon.cleaner.join_babylon_segments_in_dir(out_path_dir=out_path_dir, glob_pattern="*.babylon")
