@@ -5,11 +5,11 @@ import langcodes
 import regex
 
 
-language_code_map = {"ayurveda": "sa", "prakrit": "pi", "test": "en"}
+language_code_map = {"ayurveda": "sa", "prakrit": "pali", "test": "en"}
 
 
 def get_main_language(file_path):
-  matches = regex.findall("stardict[-_][^/]+", str(file_path))
+  matches = regex.findall("stardict[-_][^/-_]+", str(file_path))
   main_langage = matches[-1][len("stardict-"):]
   if main_langage in language_code_map:
     main_langage = language_code_map[main_langage]
@@ -35,7 +35,7 @@ def set_languages(file_path, src_language=None, dest_language=None):
     return
   else:
     logging.info("Setting %s in %s", lang_pair, short_file_path)
-    headers["bookname"] = "%s (%s-%s)" % (headers["bookname"], src_language, dest_language)
+    headers["bookname"] = "%s %s" % (headers["bookname"], lang_pair)
 
   header_helper.set_headers(file_path=file_path, headers=headers)
 
