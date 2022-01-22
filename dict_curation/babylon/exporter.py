@@ -1,8 +1,8 @@
 import codecs
 import os
 
-from dict_curation.babylon.headwords import get_headwords
-from dict_curation.babylon.definitions import get_definitions
+from dict_curation.babylon.headwords_helper import get_headwords
+from dict_curation.babylon.definitions_helper import get_definitions
 import logging
 
 # Remove all handlers associated with the root logger object.

@@ -6,7 +6,7 @@ from pathlib import Path
 from curation_utils import file_helper
 from tqdm import tqdm
 
-from dict_curation.babylon.definitions import get_definitions
+from dict_curation.babylon.definitions_helper import get_definitions
 
 
 def fix_newlines(lines):
