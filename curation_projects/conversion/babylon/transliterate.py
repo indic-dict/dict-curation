@@ -15,6 +15,7 @@ from indic_transliteration import sanscript
 GeneralMap.DEVANAGARI = "Devanagari"
 GeneralMap.BENGALI = "Bengali"
 GeneralMap.TAMIL = "Tamil"
+GeneralMap.TELUGU = "Telugu"
 
 for handler in logging.root.handlers[:]:
   logging.root.removeHandler(handler)
@@ -155,15 +156,14 @@ def process_ml_dicts():
   process_dir(source_script=GeneralMap.MALAYALAM, dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir)
 
 
-def process_te_dicts():
-  # process_dir(source_script=GeneralMap.TELUGU, dest_script="ISO", source_dir="/home/vvasuki/indic-dict/stardict-telugu/en-head")
-  # 
-  # remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-telugu/te-head/janapada/janapada.babylon")
-  # remove_devanagari_headwords(source_path="/home/vvasuki/indic-dict/stardict-telugu/te-head/wiktionary_telugu/wiktionary_telugu.babylon")
-  # 
-  source_dir = "/home/vvasuki/indic-dict/stardict-telugu/te-head/"
+def process_telugu_dicts():
+  process_dir(source_script=GeneralMap.TELUGU, dest_script="ISO", source_dir="/home/vvasuki/indic-dict/stardict-telugu/en-head")
+
+  source_dir = "/home/vvasuki/indic-dict/stardict-telugu/te-head/en-entries"
   process_dir(source_script=GeneralMap.TELUGU, dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir)
 
+  source_dir = "/home/vvasuki/indic-dict/stardict-telugu/te-head/te-entries"
+  process_dir(source_script=GeneralMap.TELUGU, dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir)
 
 def process_tamil_dicts():
   pre_options = ["TamilTranscribe"]
@@ -197,7 +197,8 @@ def fix_kittel():
 
 
 if __name__ == '__main__':
-  process_tamil_dicts()
+  # process_tamil_dicts()
+  process_telugu_dicts()
   # process_bengali_dicts()
   # process_divehi_dicts()
   # process_kannada_dicts()
