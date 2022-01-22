@@ -43,48 +43,6 @@ def split_to_babylon_segements(file_path, out_path_dir=None):
       file_out.writelines(["%s\n%s\n\n" % (headword, definition)])
 
 
-def set_languages(file_path, src_language=None, dest_language=None):
-  import langcodes
-  file_path = str(file_path)
-  if src_language is None:
-    matches = regex.findall("[^/]+-head", str(file_path))
-    if len(matches) > 0:
-      src_language = matches[0][:-len("-head")]
-    else:
-      matches = regex.findall("stardict-[^/]+", str(file_path))
-      src_language = matches[0][len("stardict-"):]
-    language_code_map = {"ayurveda": "sa", "prakrit": "pi", "test": "en"}
-    if src_language in language_code_map:
-      src_language = language_code_map[src_language]
-    if len(src_language) > 2:
-      try:
-        src_language = langcodes.standardize_tag(langcodes.find(src_language))
-      except LookupError:
-        logging.fatal("%s", file_path)
-  if dest_language is None:
-    entries_matches = regex.findall("[^/-]+-entries", str(file_path))
-    if len(entries_matches) > 0:
-      dest_language = entries_matches[0][:-len("-entries")]
-      if dest_language.startswith("other"):
-        dest_language = src_language
-      elif len(dest_language) > 2:
-        dest_language = langcodes.standardize_tag(langcodes.find(dest_language))
-    else:
-      dest_language = src_language
-
-  from dict_curation.babylon import header_helper
-  headers = header_helper.get_headers(file_path=file_path)
-  headers["bookname"] = headers.get("bookname", os.path.basename(file_path).replace(".babylon_final", "").replace(".babylon", ""))
-  if regex.findall(r"\(..-..\)", headers["bookname"]):
-    logging.info("Retaining %s in %s", headers["bookname"], file_path)
-    return 
-  else:
-    logging.info("Setting (%s-%s) in %s", src_language, dest_language, file_path.replace("/home/vvasuki/indic-dict/stardict_all/", ""))
-    headers["bookname"] = "%s (%s-%s)" % (headers["bookname"], src_language, dest_language)
-  
-  header_helper.set_headers(file_path=file_path, headers=headers)
-
-
 def clean_all(dir_path, cleaner):
   babylon_files = list(Path(dir_path).glob("**/*.babylon_final"))
   babylon_files += Path(dir_path).glob("**/*.babylon")

@@ -1,5 +1,6 @@
 import codecs
 import itertools
+import logging
 
 
 def get_headers(file_path):
@@ -17,6 +18,9 @@ def get_headers(file_path):
         assert line == "", file_path
         return headers
       line = line[1:]
+      if "=" not in line:
+        logging.warning("Strange line: %s in %s", line, file_path)
+        continue
       [key, value] = line.split("=")
       headers[key] = value
 
