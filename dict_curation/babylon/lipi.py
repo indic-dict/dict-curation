@@ -58,6 +58,7 @@ def add_devanagari_headwords(source_path, source_script, pre_options=[], line_1_
   source_path = str(source_path)
   logging.info("\nadd_devanagari_headwords %s", source_path)
   tmp_path = source_path + ".tmp"
+  from ordered_set import OrderedSet
   with codecs.open(source_path, "r", "utf-8") as in_file, codecs.open(tmp_path, "w", "utf-8") as out_file:
     progress_bar = tqdm.tqdm(total=int(subprocess.check_output(['wc', '-l', source_path]).split()[0]), desc="Lines", position=0)
     line_number = 1
@@ -66,7 +67,7 @@ def add_devanagari_headwords(source_path, source_script, pre_options=[], line_1_
         # line = line.replace("‍", "").replace("~", "")
         headwords = line.strip().split("|")
         devanagari_headwords = [aksharamukha.transliterate.process(src=source_script, tgt="Devanagari", txt=headword, nativize = True, pre_options = pre_options) for headword in headwords]
-        dest_line = "|".join(headwords + devanagari_headwords)
+        dest_line = "|".join(OrderedSet(headwords + devanagari_headwords))
         if not dest_line.endswith("\n"):
           dest_line = dest_line + "\n"
       else:
