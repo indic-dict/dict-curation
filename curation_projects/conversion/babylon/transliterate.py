@@ -1,4 +1,5 @@
 from aksharamukha import GeneralMap
+from indic_transliteration import sanscript
 
 from dict_curation import babylon
 from dict_curation.babylon import lipi
@@ -76,7 +77,7 @@ def fix_kittel():
 
 def process_urdu_dicts():
   source_path = "/home/vvasuki/indic-dict/stardict_all/stardict-urdu/ur-head/en-entries/"
-  babylon.process_all(dir_path=source_path, transformer=lipi.add_devanagari_headwords, source_script="Urdu")
+  babylon.process_all(dir_path=source_path, transformer=lipi.add_devanagari_headwords, source_script=sanscript.ISO)
 
 
 if __name__ == '__main__':

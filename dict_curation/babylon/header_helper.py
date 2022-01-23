@@ -24,6 +24,7 @@ def get_headers(file_path):
       [key, value] = line.split("=")
       headers[key] = value
 
+
 def set_headers(file_path, headers):
   from collections import defaultdict
   lines = []

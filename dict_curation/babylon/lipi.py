@@ -70,7 +70,12 @@ def add_devanagari_headwords(source_path, source_script, pre_options=[] ):
       if line_number >= line_1_index and (line_number - line_1_index) % 3 == 0:
         # line = line.replace("‍", "").replace("~", "")
         headwords = line.strip().split("|")
-        devanagari_headwords = [aksharamukha.transliterate.process(src=source_script, tgt="Devanagari", txt=headword, nativize = True, pre_options = pre_options) for headword in headwords]
+        if "urdu" in source_path and source_script == sanscript.ISO:
+          optitrans_headwords = [sanscript.SCHEMES[sanscript.OPTITRANS].approximate_from_iso_urdu(x) for x in headwords]
+          devanagari_headwords = [sanscript.transliterate(x, _from=sanscript.OPTITRANS, _to=sanscript.DEVANAGARI) for x in optitrans_headwords]
+          devanagari_headwords = devanagari_headwords + optitrans_headwords
+        else:
+          devanagari_headwords = [aksharamukha.transliterate.process(src=source_script, tgt="Devanagari", txt=headword, nativize = True, pre_options = pre_options) for headword in headwords]
         dest_line = "|".join(OrderedSet(headwords + devanagari_headwords))
         if not dest_line.endswith("\n"):
           dest_line = dest_line + "\n"
@@ -130,7 +135,8 @@ def process_dir(source_script, dest_script, source_dir, dest_dir=None, pre_optio
         logging.warning("did not find %s", source_dict_path)
 
 
-def transliterate_headword_with_sanscript(file_path, source_script=sanscript.IAST, dest_script=sanscript.DEVANAGARI, dry_run=False):
+def transliterate_headword_with_sanscript(file_path, source_script=sanscript.ISO, dest_script=sanscript.DEVANAGARI, dry_run=False):
+  file_path = str(file_path)
   tmp_file_path = file_path + "_fixed"
   with codecs.open(file_path, "r", 'utf-8') as file_in:
     lines = file_in.readlines()
