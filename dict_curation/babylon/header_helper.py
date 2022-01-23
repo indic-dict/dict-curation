@@ -39,3 +39,11 @@ def set_headers(file_path, headers):
       file_out.write("\n")
     for line in lines:
       file_out.write(line)
+
+
+def get_non_header_line_1_index(file_path):
+  headers = get_headers(file_path=file_path)
+  if len(headers) == 0:
+    return 1
+  else:
+    return len(headers) + 3

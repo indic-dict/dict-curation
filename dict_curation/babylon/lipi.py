@@ -10,6 +10,8 @@ import tqdm
 from aksharamukha import GeneralMap
 from indic_transliteration import sanscript
 
+from dict_curation.babylon import header_helper
+
 GeneralMap.DEVANAGARI = "Devanagari"
 GeneralMap.BENGALI = "Bengali"
 GeneralMap.TAMIL = "Tamil"
@@ -34,8 +36,9 @@ def convert_with_aksharamukha(source_path, dest_path, source_script, dest_script
       progress_bar.update(1)
 
 
-def remove_devanagari_headwords(source_path, line_1_index=1):
+def remove_devanagari_headwords(source_path):
   logging.info("\nremove_devanagari_headwords %s", source_path)
+  line_1_index = header_helper.get_non_header_line_1_index(file_path=source_path)
   with codecs.open(source_path, "r", "utf-8") as in_file, codecs.open(source_path + ".tmp", "w", "utf-8") as out_file:
     progress_bar = tqdm.tqdm(total=int(subprocess.check_output(['wc', '-l', source_path]).split()[0]), desc="Lines", position=0)
     line_number = 1
@@ -54,10 +57,11 @@ def remove_devanagari_headwords(source_path, line_1_index=1):
       line_number = line_number + 1
 
 
-def add_devanagari_headwords(source_path, source_script, pre_options=[], line_1_index=1, ):
+def add_devanagari_headwords(source_path, source_script, pre_options=[] ):
   source_path = str(source_path)
   logging.info("\nadd_devanagari_headwords %s", source_path)
   tmp_path = source_path + ".tmp"
+  line_1_index = header_helper.get_non_header_line_1_index(file_path=source_path)
   from ordered_set import OrderedSet
   with codecs.open(source_path, "r", "utf-8") as in_file, codecs.open(tmp_path, "w", "utf-8") as out_file:
     progress_bar = tqdm.tqdm(total=int(subprocess.check_output(['wc', '-l', source_path]).split()[0]), desc="Lines", position=0)
@@ -79,9 +83,10 @@ def add_devanagari_headwords(source_path, source_script, pre_options=[], line_1_
   shutil.move(tmp_path, source_path)
 
 
-def add_lazy_anusvaara_headwords(source_path, source_script, line_1_index=1, ):
+def add_lazy_anusvaara_headwords(source_path, source_script):
   logging.info("\nadd_lazy_anusvaara_headwords %s", source_path)
   tmp_path = source_path + ".tmp"
+  line_1_index = header_helper.get_non_header_line_1_index(file_path=source_path)
   with codecs.open(source_path, "r", "utf-8") as in_file, codecs.open(tmp_path, "w", "utf-8") as out_file:
     progress_bar = tqdm.tqdm(total=int(subprocess.check_output(['wc', '-l', source_path]).split()[0]), desc="Lines", position=0)
     line_number = 1

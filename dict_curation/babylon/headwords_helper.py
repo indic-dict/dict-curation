@@ -7,6 +7,7 @@ from tqdm import tqdm
 import logging
 
 # Remove all handlers associated with the root logger object.
+from dict_curation.babylon import header_helper
 
 for handler in logging.root.handlers[:]:
   logging.root.removeHandler(handler)
@@ -30,7 +31,8 @@ def get_headwords(in_path):
 
 
 
-def add_headwords_from_definitions(file_path, headword_extractor, line_1_index=1, dry_run=False):
+def add_headwords_from_definitions(file_path, headword_extractor, dry_run=False):
+  line_1_index = header_helper.get_non_header_line_1_index(file_path=file_path)
   tmp_file_path = file_path + "_fixed"
   with codecs.open(file_path, "r", 'utf-8') as file_in:
     lines = file_in.readlines()
