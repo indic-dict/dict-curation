@@ -1,10 +1,8 @@
 import codecs
-import glob
 import logging
 import os
 from pathlib import Path
 
-import regex
 from curation_utils import file_helper
 from tqdm import tqdm
 
@@ -43,9 +41,3 @@ def split_to_babylon_segements(file_path, out_path_dir=None):
       file_out.writelines(["%s\n%s\n\n" % (headword, definition)])
 
 
-def clean_all(dir_path, cleaner):
-  babylon_files = list(Path(dir_path).glob("**/*.babylon_final"))
-  babylon_files += Path(dir_path).glob("**/*.babylon")
-  for babylon_file in babylon_files:
-    logging.info("Processing %s", babylon_file)
-    cleaner(babylon_file)

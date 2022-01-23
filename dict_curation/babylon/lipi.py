@@ -55,6 +55,7 @@ def remove_devanagari_headwords(source_path, line_1_index=1):
 
 
 def add_devanagari_headwords(source_path, source_script, pre_options=[], line_1_index=1, ):
+  source_path = str(source_path)
   logging.info("\nadd_devanagari_headwords %s", source_path)
   tmp_path = source_path + ".tmp"
   with codecs.open(source_path, "r", "utf-8") as in_file, codecs.open(tmp_path, "w", "utf-8") as out_file:
@@ -75,7 +76,6 @@ def add_devanagari_headwords(source_path, source_script, pre_options=[], line_1_
       line_number = line_number + 1
   os.remove(source_path)
   shutil.move(tmp_path, source_path)
-
 
 
 def add_lazy_anusvaara_headwords(source_path, source_script, line_1_index=1, ):
