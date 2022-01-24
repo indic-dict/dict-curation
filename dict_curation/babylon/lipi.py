@@ -74,7 +74,8 @@ def add_devanagari_headwords(source_path, source_script, pre_options=[] ):
           optitrans_headwords = [sanscript.SCHEMES[sanscript.OPTITRANS].approximate_from_iso_urdu(x) for x in headwords]
           optitrans_headwords += [x.replace("E", "e") for x in optitrans_headwords]
           devanagari_headwords = [sanscript.transliterate(x, _from=sanscript.OPTITRANS, _to=sanscript.DEVANAGARI) for x in optitrans_headwords]
-          devanagari_headwords += [x.replace("-", "") for x in devanagari_headwords]
+          devanagari_headwords += [x.replace("-", "").replace("\u200d", "") for x in devanagari_headwords]
+          optitrans_headwords = [x.replace("{}", "") for x in optitrans_headwords]
           devanagari_headwords = devanagari_headwords + optitrans_headwords
         else:
           devanagari_headwords = [aksharamukha.transliterate.process(src=source_script, tgt="Devanagari", txt=headword, nativize = True, pre_options = pre_options) for headword in headwords]
