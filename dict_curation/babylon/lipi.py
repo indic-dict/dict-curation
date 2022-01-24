@@ -72,6 +72,7 @@ def add_devanagari_headwords(source_path, source_script, pre_options=[] ):
         headwords = line.strip().split("|")
         if "urdu" in source_path and source_script == sanscript.ISO:
           optitrans_headwords = [sanscript.SCHEMES[sanscript.OPTITRANS].approximate_from_iso_urdu(x) for x in headwords]
+          optitrans_headwords += [x.replace("E", "e") for x in optitrans_headwords]
           devanagari_headwords = [sanscript.transliterate(x, _from=sanscript.OPTITRANS, _to=sanscript.DEVANAGARI) for x in optitrans_headwords]
           devanagari_headwords = devanagari_headwords + optitrans_headwords
         else:
