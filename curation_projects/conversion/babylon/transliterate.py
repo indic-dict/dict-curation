@@ -82,7 +82,7 @@ def process_urdu_dicts():
 
 def process_gujarati_dicts():
   source_dir = "/home/vvasuki/indic-dict/stardict_all/stardict-gujarati/en-head"
-  lipi.process_dir(source_script="Gujarati", dest_script="Devanagari", source_dir=source_dir)
+  lipi.process_dir(source_script="Gujarati", dest_script="Devanagari", source_dir=source_dir, overwrite=True)
 
 
 if __name__ == '__main__':
