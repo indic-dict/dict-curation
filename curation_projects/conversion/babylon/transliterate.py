@@ -80,10 +80,16 @@ def process_urdu_dicts():
   babylon.process_all(dir_path=source_path, transformer=lipi.add_devanagari_headwords, source_script=sanscript.ISO)
 
 
+def process_gujarati_dicts():
+  source_dir = "/home/vvasuki/indic-dict/stardict_all/stardict-gujarati/en-head"
+  lipi.process_dir(source_script="Gujarati", dest_script="Devanagari", source_dir=source_dir)
+
+
 if __name__ == '__main__':
   # process_tamil_dicts()
   # process_telugu_dicts()
-  process_urdu_dicts()
+  # process_urdu_dicts()
+  process_gujarati_dicts()
   # process_bengali_dicts()
   # process_divehi_dicts()
   # process_kannada_dicts()
