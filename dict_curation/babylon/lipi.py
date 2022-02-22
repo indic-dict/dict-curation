@@ -29,11 +29,11 @@ def convert_with_aksharamukha(source_path, dest_path, source_script, dest_script
   logging.info("\nTransliterating (%s > %s) %s to %s", source_script, dest_script, source_path, dest_path)
   os.makedirs(os.path.dirname(dest_path), exist_ok=True)
   with codecs.open(source_path, "r", "utf-8") as in_file, codecs.open(dest_path, "w", "utf-8") as out_file:
-    progress_bar = tqdm.tqdm(total=int(subprocess.check_output(['wc', '-l', source_path]).split()[0]), desc="Lines", position=0)
-    for line in in_file:
-      dest_line = aksharamukha.transliterate.process(src=source_script, tgt=dest_script, txt=line, nativize = True, pre_options = pre_options, post_options = post_options)
-      out_file.write(dest_line)
-      progress_bar.update(1)
+    text = in_file.read()
+    while text:
+      out_text = aksharamukha.transliterate.process(src=source_script, tgt=dest_script, txt=text, nativize = True, pre_options = pre_options, post_options = post_options)
+      out_file.write(out_text)
+      text = in_file.read()
 
 
 def remove_devanagari_headwords(source_path):
