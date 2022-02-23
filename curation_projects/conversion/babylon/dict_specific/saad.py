@@ -6,7 +6,9 @@ from dict_curation import Definition
 
 def append_taxonomy_entries(outfile, tree):
   subtags = [node for node in tree.keys() if node != collection_helper.LEAVES_KEY]
+  subtags.sort()
   for subtag in subtags:
+    tree[subtag][collection_helper.LEAVES_KEY].sort()
     outfile.write("%s\nSubtypes: %s<BR><BR>Entities: %s\n\n" % (subtag, " ".join(subtags), " ".join(tree[subtag][collection_helper.LEAVES_KEY])))
     append_taxonomy_entries(outfile=outfile, tree=tree[subtag])
   
