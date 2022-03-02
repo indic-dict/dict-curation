@@ -2,6 +2,7 @@ from curation_utils.google import sheets
 from sanskrit_data import collection_helper
 
 from dict_curation import Definition
+from dict_curation.babylon import language
 
 
 def append_taxonomy_entries(outfile, tree):
@@ -31,6 +32,7 @@ def import_from_google_sheets(out_path):
       entry = "%s<br><br>%s" % (taxon, " ".join(headwords))
       outfile.write("%s\n%s\n\n" % ("|".join(headwords), entry))
     append_taxonomy_entries(outfile=outfile, tree=tree)
+  language.set_languages(src_language="en", dest_language="gj")
   pass
 
 

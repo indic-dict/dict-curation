@@ -3,6 +3,7 @@ from indic_transliteration import sanscript
 
 from dict_curation import babylon
 from dict_curation.babylon import lipi
+from dict_curation.babylon.lipi import remove_devanagari_headwords
 
 
 def process_oriya_dicts():
