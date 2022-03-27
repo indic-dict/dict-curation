@@ -38,4 +38,4 @@ def dump():
 
 if __name__ == '__main__':
   # language.set_languages(file_path=babylon_file)
-  cleaner.split_to_chunks(input_path=babylon_file, num_chunks=2)
+  cleaner.split_to_chunks(input_path=babylon_file, num_chunks=4)

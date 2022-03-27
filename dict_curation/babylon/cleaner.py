@@ -47,7 +47,10 @@ def split_to_chunks(input_path, num_chunks):
     dict_name = f"{dict_name_base}_{index + 1}"
     dict_path = os.path.join(os.path.dirname(os.path.dirname(input_path)), dict_name, f"{dict_name}.babylon")
     logging.info(f"Dumping {dict_name} to {dict_path}")
-    headers["bookname"] = headers.get("bookname", dict_name_base) + f" p{index + 1}"
+    # headers.get("bookname", dict_name_base)
+    from dict_curation.babylon import language
+    headers["bookname"] = dict_name_base + f" p{index + 1} {language.get_language_pair_string(dict_path)}"
+    
     babylon.dump(dest_path=dict_path, definitions=chunk, headers=headers)
   
 
