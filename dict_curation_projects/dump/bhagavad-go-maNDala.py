@@ -128,7 +128,7 @@ def dump_letter_definitions(letter, in_path_dir, out_path_dir, out_path_dir_deva
     count = 0
     empty_count = 0
     incomplete_count = 0
-    existing_definitions = dict_curation.babylon.definitions.get_definitions(out_path)
+    existing_definitions = dict_curation.babylon.definitions.get_definitions_map(out_path)
     with codecs.open(in_path, "r", 'utf-8') as file_in, codecs.open(out_path, "w", 'utf-8') as file_out, codecs.open(out_path_devanagari_entries, "w", 'utf-8') as file_out_devanagari:
         headwords = file_in.readlines()
         progress_bar = tqdm.tqdm(total=len(headwords), desc="Headwords for %s" % letter, position=0)
@@ -166,7 +166,7 @@ def dump_definitions(letters, in_path_dir, out_path_dir, out_path_dir_devanagari
 
 
 def test_get_definition(x):
-    existing_definitions = dict_curation.babylon.definitions.get_definitions("/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala-a-Na/mUlam/આ.babylon")
+    existing_definitions = dict_curation.babylon.definitions.get_definitions_map("/home/vvasuki/indic-dict/stardict-gujarati/gu-head/gu-entries/bhagavad-go-maNDala-a-Na/mUlam/આ.babylon")
     logging.debug(get_definition(headword=x, existing_definitions=existing_definitions))
     exit()
 

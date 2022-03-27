@@ -36,7 +36,7 @@ def fix_definitions(f, file_path, dry_run=False):
     os.rename(src=tmp_file_path, dst=file_path)
 
 
-def get_definitions(in_path, do_fix_newlines=False):
+def get_definitions_map(in_path, do_fix_newlines=False, definitions_list=None):
   logging.info("Getting definitions from %s" % in_path)
   definitions = {}
   empty_headwords = 0
@@ -61,6 +61,8 @@ def get_definitions(in_path, do_fix_newlines=False):
           logging.warning("Empty definition for %s at %d", "|".join(current_headwords), index + 1)
           continue
         definition = Definition(headwords_tuple=tuple(current_headwords), meaning=meaning)
+        if definitions_list is not None:
+          definitions_list.append(definition)
         for headword in current_headwords:
           if headword == "":
             empty_headwords = empty_headwords + 1

@@ -42,6 +42,11 @@ def set_headers(file_path, headers):
       file_out.write(line)
 
 
+def set_html_headers(headers):
+  headers["sametypesequence"] = "h"
+  headers["stripmethod"] = "keep"
+
+
 def get_non_header_line_1_index(file_path):
   headers = get_headers(file_path=file_path)
   if len(headers) == 0:

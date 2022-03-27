@@ -2,7 +2,7 @@ import codecs
 import os
 
 from dict_curation.babylon.headwords_helper import get_headwords
-from dict_curation.babylon.definitions_helper import get_definitions
+from dict_curation.babylon.definitions_helper import get_definitions_map
 import logging
 
 # Remove all handlers associated with the root logger object.
@@ -25,7 +25,7 @@ def dump_headwords_file(in_path, out_path):
 
 
 def dump_definitions_file(in_path, out_path):
-  definitions = get_definitions(in_path=in_path)
+  definitions = get_definitions_map(in_path=in_path)
   os.makedirs(os.path.dirname(out_path), exist_ok=True)
   with codecs.open(out_path, "w", 'utf-8') as file_out:
     for definition in definitions.values():
@@ -34,7 +34,7 @@ def dump_definitions_file(in_path, out_path):
 
 def to_slob(in_path, out_path):
   from dict_curation import slob
-  definitions = get_definitions(in_path=in_path)
+  definitions = get_definitions_map(in_path=in_path)
   os.makedirs(os.path.dirname(out_path), exist_ok=True)
   if os.path.exists(out_path):
     os.remove(out_path)

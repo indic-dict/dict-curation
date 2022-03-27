@@ -59,7 +59,7 @@ def dump_letter_definitions(letter, in_path_dir, out_path_dir, get_definition):
   empty_count = 0
   skipped_count = 0
   out_path_dir = os.path.join(out_path_dir, letter)
-  dict_curation.babylon.cleaner.split_to_babylon_segements(file_path=out_path_dir + ".babylon")
+  dict_curation.babylon.cleaner.split_to_per_headword_babylon_segements(file_path=out_path_dir + ".babylon")
   with codecs.open(in_path, "r", 'utf-8') as file_in:
     headword_details = file_in.readlines()
     from tqdm.contrib.concurrent import process_map  # or thread_map

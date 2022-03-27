@@ -67,5 +67,5 @@ def get_dict(browser, outfile_path, start_nodes=["अ--उह्र", "अ--अ�
 if __name__ == '__main__':
     # browser = parankusha.get_logged_in_browser(headless=False)
     # get_dict(browser=browser, outfile_path="/home/vvasuki/indic-dict/stardict-sanskrit/sa-head/other-indic-entries/shabdArtha_kaustubha/shabdArtha_kasutubha.babylon", start_nodes=["वेदान्तिन्--ह्लाद्य", "शर्करा--शालसार"])
-    dict_curation.babylon.definitions.get_definitions(in_path="/home/vvasuki/indic-dict/stardict-sanskrit/sa-head/other-indic-entries/shabdArtha_kaustubha/shabdArtha_kaustubha.babylon", do_fix_newlines=True)
+    dict_curation.babylon.definitions.get_definitions_map(in_path="/home/vvasuki/indic-dict/stardict-sanskrit/sa-head/other-indic-entries/shabdArtha_kaustubha/shabdArtha_kaustubha.babylon", do_fix_newlines=True)
     # browser.close()    

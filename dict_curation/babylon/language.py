@@ -23,6 +23,7 @@ def set_languages(file_path, src_language=None, dest_language=None):
 
   from dict_curation.babylon import header_helper
   headers = header_helper.get_headers(file_path=file_path)
+  header_helper.set_html_headers(headers=headers)
   headers["bookname"] = headers.get("bookname", os.path.basename(file_path).replace(".babylon_final", "").replace(".babylon", ""))
   
   preset_lang_pairs = regex.findall(r"\(..-..\)", headers["bookname"])
