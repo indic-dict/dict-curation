@@ -17,8 +17,6 @@ logging.basicConfig(
   format="%(levelname)s:%(asctime)s:%(module)s:%(lineno)d %(message)s")
 
 
-
-
 def fix_definitions(f, file_path, dry_run=False):
   tmp_file_path = file_path + "_fixed"
   with codecs.open(file_path, "r", 'utf-8') as file_in:

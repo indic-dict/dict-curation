@@ -7,7 +7,7 @@ from doc_curation.scraping import wikisource
 from doc_curation.scraping.html_scraper import souper
 
 base_dir = "/home/vvasuki/indic-dict/stardict_all/stardict-kannada/kn-head/kn-entries/maisUru-vishvakosha"
-babylon_file = os.path.join(base_dir, os.path.basename(base_dir) + ".babylon")
+babylon_file = os.path.join(base_dir, os.path.basename(base_dir) + ".babylon.local")
 
 
 def url_gatherer(soup, url):

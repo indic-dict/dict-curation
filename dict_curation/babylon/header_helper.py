@@ -1,6 +1,8 @@
 import codecs
 import itertools
 import logging
+import regex
+import os
 
 
 def get_headers(file_path):
@@ -42,9 +44,21 @@ def set_headers(file_path, headers):
       file_out.write(line)
 
 
-def set_html_headers(headers):
+def set_html_headers(headers=None):
+  if headers is None:
+    headers = {}
   headers["sametypesequence"] = "h"
   headers["stripmethod"] = "keep"
+  return headers
+
+
+def get_default_headers(file_path):
+  from dict_curation.babylon import language
+  headers = {}
+  headers["bookname"] = headers.get("bookname", regex.sub("\.babylon.*", "", os.path.basename(file_path)))
+  headers["bookname"] = f"{headers['bookname']} {language.get_language_pair_string(file_path=file_path)}"
+  set_html_headers(headers=headers)
+  return headers
 
 
 def get_non_header_line_1_index(file_path):
