@@ -21,6 +21,7 @@ def dump():
     headword = None
     meaning = None
     for line in pd.readlines():
+      line = line.strip()
       if line.startswith("<L>"):
         keyword_match = regex.search("<k1>(.+?)<", line)
         headword = keyword_match.group(1)
@@ -31,11 +32,16 @@ def dump():
         definitions.append(defintion)
         headword = None
       elif headword is not None:
-        line = line.replace("<div n=\"lb\">", "").replace("¦", "<br>")
-        line = regex.sub(r"<sup>(\d+)</sup>", r"\1 ", line)
+        line = line.replace("{**}", ".. ").replace("{^}", "^").replace("{sic}", "(??)")
+        line = regex.sub(r"^\.", r"<BR>", line)
+        line = regex.sub(r"[⁰-⁹]", lambda x: "_" * (ord(x.group(0))-ord("⁰")), line)
+        line = regex.sub(r"[²-³]", lambda x: "__" + "_" * (ord(x.group(0))-ord("²")), line)
+        line = regex.sub(r"<ls>(.+?)</ls>", r"[[\1]]", line)
+        line = regex.sub(r"<ab>(.+?)</ab>", r"\1", line)
         # Once all tags are eliminated, we do the below.
         line = line.replace(" M£", "M£").replace("/", "̭") 
         line = regex.sub(r"{#(.+?)#}", lambda x: devanaagarify(x.group(1)), line)
+        line = regex.sub(r"¦ *", "<BR>", line)
         line = regex.sub(r"{%(.+?)%}", r"<i>\1</i>", line)
         line = regex.sub(r"{@(.+?)@}", r"<b>\1</b>", line)
         line = regex.sub(r"।(?=[^ ])", r"। ", line)

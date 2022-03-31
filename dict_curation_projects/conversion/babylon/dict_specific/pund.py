@@ -21,6 +21,7 @@ def dump():
     headword = None
     meaning = None
     for line in pd.readlines():
+      line = line.strip()
       if line.startswith("<L>"):
         keyword_match = regex.search("<k1>(.+?)<", line)
         headword = keyword_match.group(1)
