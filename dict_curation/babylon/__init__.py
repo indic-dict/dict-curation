@@ -29,4 +29,4 @@ def dump(dest_path, definitions, headers=None):
         f.write("#%s=%s\n" % (key, value))
       f.write("\n")
     for definition in definitions:
-      f.write(f"{'|'.join(definition.headwords_tuple)}\n{definition.meaning}\n\n")
+      f.write(f"{'|'.join(definition.headwords_tuple)}\n{definition.meaning.strip()}\n\n")
