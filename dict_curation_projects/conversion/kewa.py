@@ -51,4 +51,3 @@ def dump_babylon():
 if __name__ == '__main__':
   dump_babylon()
   pass
-
