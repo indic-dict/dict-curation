@@ -8,7 +8,7 @@ import aksharamukha.transliterate
 import regex
 import tqdm
 from aksharamukha import GeneralMap
-from indic_transliteration import sanscript
+from indic_transliteration import sanscript, convert_with_aksharamukha
 
 from dict_curation.babylon import header_helper
 
@@ -22,18 +22,6 @@ for handler in logging.root.handlers[:]:
 logging.basicConfig(
   level=logging.DEBUG,
   format="%(levelname)s:%(asctime)s:%(module)s:%(lineno)d %(message)s")
-
-
-
-def convert_with_aksharamukha(source_path, dest_path, source_script, dest_script, pre_options = [], post_options = []):
-  logging.info("\nTransliterating (%s > %s) %s to %s", source_script, dest_script, source_path, dest_path)
-  os.makedirs(os.path.dirname(dest_path), exist_ok=True)
-  with codecs.open(source_path, "r", "utf-8") as in_file, codecs.open(dest_path, "w", "utf-8") as out_file:
-    text = in_file.read()
-    while text:
-      out_text = aksharamukha.transliterate.process(src=source_script, tgt=dest_script, txt=text, nativize = True, pre_options = pre_options, post_options = post_options)
-      out_file.write(out_text)
-      text = in_file.read()
 
 
 def remove_devanagari_headwords(source_path):
