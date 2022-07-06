@@ -17,7 +17,7 @@ def url_gatherer(soup, url):
 def get_definition(url):
   soup = scraping.get_soup(url)
   souper.strip_comments(soup=soup)
-  souper.tag_remover(soup=soup, css_selector="h2")
+  souper.element_remover(soup=soup, css_selector="h2")
   headword_element = soup.select_one('#firstHeading')
   if headword_element is None:
     return (None, None)
