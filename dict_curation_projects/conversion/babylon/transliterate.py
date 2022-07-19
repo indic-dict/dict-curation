@@ -87,10 +87,10 @@ def process_gujarati_dicts():
 
 
 if __name__ == '__main__':
-  # process_tamil_dicts()
+  process_tamil_dicts()
   # process_telugu_dicts()
   # process_urdu_dicts()
-  process_gujarati_dicts()
+  # process_gujarati_dicts()
   # process_bengali_dicts()
   # process_divehi_dicts()
   # process_kannada_dicts()

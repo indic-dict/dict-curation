@@ -3,6 +3,8 @@ import itertools
 import logging
 import os
 
+import aksharamukha
+from indic_transliteration import detect
 from tqdm import tqdm
 
 from dict_curation import Definition
@@ -17,21 +19,26 @@ logging.basicConfig(
   format="%(levelname)s:%(asctime)s:%(module)s:%(lineno)d %(message)s")
 
 
-def fix_definitions(f, file_path, dry_run=False):
-  tmp_file_path = file_path + "_fixed"
-  with codecs.open(file_path, "r", 'utf-8') as file_in:
-    lines = file_in.readlines()
-    with codecs.open(tmp_file_path, "w", 'utf-8') as file_out:
-      for index, line in enumerate(lines):
-        if index % 3 == 1:
-          line = f(line)
-        line = line
-        file_out.write(line)
-        if dry_run:
-          print(line)
-  if not dry_run:
-    os.remove(file_path)
-    os.rename(src=tmp_file_path, dst=file_path)
+def transliterate_tamil(headwords, definition, dest_script="Devanagari"):
+  new_headwords = []
+  transcribed_headwords =[]
+  for headword in headwords:
+    headword_script = detect.detect(headword).lower()
+    if headword_script == dest_script.lower():
+      continue
+    else:
+      new_headwords.append(headword)
+      if headword_script == "tamil":
+        new_headword = aksharamukha.transliterate.process(src="Tamil", tgt=dest_script, txt=headword, nativize = True, pre_options = [], post_options = [])
+        transcribed_headwords.append(new_headword)
+        new_headword = aksharamukha.transliterate.process(src="Tamil", tgt=dest_script, txt=headword, nativize = True, pre_options = ["TamilTranscribe"], post_options = [])
+        transcribed_headwords.append(new_headword)
+        new_headword = aksharamukha.transliterate.process(src="Tamil", tgt=dest_script, txt=headword, nativize = True, pre_options = ["TamilTranscribeDialect"], post_options = [])
+        transcribed_headwords.append(new_headword)
+  new_headwords.extend(transcribed_headwords)
+  definition = aksharamukha.transliterate.process(src="Tamil", tgt=dest_script, txt=definition, nativize = True, pre_options = ["TamilTranscribe"], post_options = [])
+  definition = f"{transcribed_headwords.join('|')}<br>{definition}"
+  return (new_headwords, definition)
 
 
 def get_definitions_map(in_path, do_fix_newlines=False, definitions_list=None):
