@@ -66,4 +66,4 @@ def get_non_header_line_1_index(file_path):
   if len(headers) == 0:
     return 1
   else:
-    return len(headers) + 3
+    return len(headers) + 2

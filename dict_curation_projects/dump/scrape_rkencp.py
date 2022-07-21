@@ -261,9 +261,9 @@ async def _create_babyloan(target_file_path='rkmath_encyclopedia_of_hinduism.bab
     hyperlink(target_file_path, all_words)
 
 
-def create_babyloan(*args, **kwargs):
+def create_babylon(*args, **kwargs):
     asyncio.get_event_loop().run_until_complete(_create_babyloan(*args, **kwargs))
 
 
 if __name__ == '__main__':
-    create_babyloan(*sys.argv[1:])
+    create_babylon(*sys.argv[1:])

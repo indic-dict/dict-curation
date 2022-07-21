@@ -8,9 +8,9 @@ import aksharamukha.transliterate
 import regex
 import tqdm
 from aksharamukha import GeneralMap
-from indic_transliteration import sanscript, convert_with_aksharamukha
+from indic_transliteration import sanscript, convert_with_aksharamukha, detect
 
-from dict_curation.babylon import header_helper
+from dict_curation.babylon import lipi, definitions_helper
 
 GeneralMap.DEVANAGARI = "Devanagari"
 GeneralMap.BENGALI = "Bengali"
@@ -24,83 +24,61 @@ logging.basicConfig(
   format="%(levelname)s:%(asctime)s:%(module)s:%(lineno)d %(message)s")
 
 
-def remove_devanagari_headwords(source_path):
-  logging.info("\nremove_devanagari_headwords %s", source_path)
-  line_1_index = header_helper.get_non_header_line_1_index(file_path=source_path)
-  with codecs.open(source_path, "r", "utf-8") as in_file, codecs.open(source_path + ".tmp", "w", "utf-8") as out_file:
-    progress_bar = tqdm.tqdm(total=int(subprocess.check_output(['wc', '-l', source_path]).split()[0]), desc="Lines", position=0)
-    line_number = 1
-    for line in in_file:
-      if "|" in line and line_number >= line_1_index and (line_number - line_1_index) % 3 == 0:
-        # line = line.replace("‍", "").replace("~", "")
-        headwords = line.split("|")
-        filtered_headwords = [headword for headword in headwords if not regex.search(r"[ऀ-ॿ]", headword)]
-        dest_line = "|".join(filtered_headwords)
-        if not dest_line.endswith("\n"):
-          dest_line = dest_line + "\n"
-      else:
-        dest_line = line
-      out_file.write(dest_line)
-      progress_bar.update(1)
-      line_number = line_number + 1
 
 
-def add_devanagari_headwords(source_path, source_script, pre_options=[] ):
-  source_path = str(source_path)
-  logging.info("\nadd_devanagari_headwords %s", source_path)
-  tmp_path = source_path + ".tmp"
-  line_1_index = header_helper.get_non_header_line_1_index(file_path=source_path)
-  from ordered_set import OrderedSet
-  with codecs.open(source_path, "r", "utf-8") as in_file, codecs.open(tmp_path, "w", "utf-8") as out_file:
-    progress_bar = tqdm.tqdm(total=int(subprocess.check_output(['wc', '-l', source_path]).split()[0]), desc="Lines", position=0)
-    line_number = 1
-    for line in in_file:
-      if line_number >= line_1_index and (line_number - line_1_index) % 3 == 0:
-        # line = line.replace("‍", "").replace("~", "")
-        headwords = line.strip().split("|")
-        if "urdu" in source_path and source_script == sanscript.ISO:
-          optitrans_headwords = [sanscript.SCHEMES[sanscript.OPTITRANS].approximate_from_iso_urdu(x) for x in headwords]
-          optitrans_headwords += [x.replace("E", "e") for x in optitrans_headwords]
-          devanagari_headwords = [sanscript.transliterate(x, _from=sanscript.OPTITRANS, _to=sanscript.DEVANAGARI) for x in optitrans_headwords]
-          devanagari_headwords += [x.replace("-", "").replace("\u200d", "") for x in devanagari_headwords]
-          optitrans_headwords = [x.replace("{}", "") for x in optitrans_headwords]
-          devanagari_headwords = devanagari_headwords + optitrans_headwords
-        else:
-          devanagari_headwords = [aksharamukha.transliterate.process(src=source_script, tgt="Devanagari", txt=headword, nativize = True, pre_options = pre_options) for headword in headwords]
-        dest_line = "|".join(OrderedSet(headwords + devanagari_headwords))
-        if not dest_line.endswith("\n"):
-          dest_line = dest_line + "\n"
-      else:
-        dest_line = line
-      out_file.write(dest_line)
-      progress_bar.update(1)
-      line_number = line_number + 1
-  os.remove(source_path)
-  shutil.move(tmp_path, source_path)
+def transliterate_headword_with_sanscript(headwords, definition, source_script=sanscript.ISO, dest_script=sanscript.DEVANAGARI, dry_run=False):
+  new_headwords = []
+  for headword in headwords:
+    new_headwords.append(sanscript.transliterate(data=headword, _from=source_script, _to=dest_script))
+  return (list(dict.fromkeys(headwords + new_headwords)), definition)
 
 
-def add_lazy_anusvaara_headwords(source_path, source_script):
-  logging.info("\nadd_lazy_anusvaara_headwords %s", source_path)
-  tmp_path = source_path + ".tmp"
-  line_1_index = header_helper.get_non_header_line_1_index(file_path=source_path)
-  with codecs.open(source_path, "r", "utf-8") as in_file, codecs.open(tmp_path, "w", "utf-8") as out_file:
-    progress_bar = tqdm.tqdm(total=int(subprocess.check_output(['wc', '-l', source_path]).split()[0]), desc="Lines", position=0)
-    line_number = 1
-    for line in in_file:
-      if line_number >= line_1_index and (line_number - line_1_index) % 3 == 0:
-        # line = line.replace("‍", "").replace("~", "")
-        headwords = line.strip().split("|")
-        new_headwords = [sanscript.SCHEMES[source_script].force_lazy_anusvaara(headword) for headword in headwords]
-        dest_line = "|".join(set(headwords + new_headwords))
-        if not dest_line.endswith("\n"):
-          dest_line = dest_line + "\n"
-      else:
-        dest_line = line
-      out_file.write(dest_line)
-      progress_bar.update(1)
-      line_number = line_number + 1
-  os.remove(source_path)
-  shutil.move(tmp_path, source_path)
+def remove_devanagari_headwords(headwords, definition):
+  filtered_headwords = [headword for headword in headwords if not regex.search(r"[ऀ-ॿ]", headword)]
+  return (filtered_headwords, definition)
+
+
+def add_devanagari_headwords(headwords, definition, source_script, language=None, pre_options=[] ):
+  if "urdu" == language.lowercase() and source_script == sanscript.ISO:
+    optitrans_headwords = [sanscript.SCHEMES[sanscript.OPTITRANS].approximate_from_iso_urdu(x) for x in headwords]
+    optitrans_headwords += [x.replace("E", "e") for x in optitrans_headwords]
+    devanagari_headwords = [sanscript.transliterate(x, _from=sanscript.OPTITRANS, _to=sanscript.DEVANAGARI) for x in optitrans_headwords]
+    devanagari_headwords += [x.replace("-", "").replace("\u200d", "") for x in devanagari_headwords]
+    optitrans_headwords = [x.replace("{}", "") for x in optitrans_headwords]
+    devanagari_headwords = devanagari_headwords + optitrans_headwords
+  else:
+    devanagari_headwords = [aksharamukha.transliterate.process(src=source_script, tgt="Devanagari", txt=headword, nativize = True, pre_options = pre_options) for headword in headwords]
+  return (list(dict.fromkeys(headwords + devanagari_headwords)), definition)
+
+
+def add_lazy_anusvaara_headwords(headwords, definition, source_script):
+  new_headwords = [sanscript.SCHEMES[source_script].force_lazy_anusvaara(headword) for headword in headwords]
+  return (list(dict.fromkeys(headwords + new_headwords)), definition)
+
+
+
+
+def transliterate_tamil(headwords, definition, dest_script="Devanagari"):
+  new_headwords = []
+  transcribed_headwords =[]
+  for headword in headwords:
+    headword_script = detect.detect(headword).lower()
+    if headword_script == dest_script.lower():
+      continue
+    else:
+      new_headwords.append(headword)
+      if headword_script == "tamil":
+        new_headword = aksharamukha.transliterate.process(src="Tamil", tgt=dest_script, txt=headword, nativize = True, pre_options = [], post_options = [])
+        transcribed_headwords.append(new_headword)
+        new_headword = aksharamukha.transliterate.process(src="Tamil", tgt=dest_script, txt=headword, nativize = True, pre_options = ["TamilTranscribe"], post_options = [])
+        transcribed_headwords.append(new_headword)
+        new_headword = aksharamukha.transliterate.process(src="Tamil", tgt=dest_script, txt=headword, nativize = True, pre_options = ["TamilTranscribeDialect"], post_options = [])
+        transcribed_headwords.append(new_headword)
+  new_headwords.extend(transcribed_headwords)
+  new_headwords = list(dict.fromkeys(new_headwords))
+  definition = aksharamukha.transliterate.process(src="Tamil", tgt=dest_script, txt=definition, nativize = True, pre_options = ["TamilTranscribe"], post_options = [])
+  definition = f"{'|'.join(new_headwords)}<br>{definition}"
+  return (new_headwords, definition)
 
 
 def process_dir(source_script, dest_script, source_dir, dest_dir=None, pre_options=[], post_options=[], overwrite=False):
@@ -119,26 +97,13 @@ def process_dir(source_script, dest_script, source_dir, dest_dir=None, pre_optio
       if os.path.exists(source_dict_path):
         dest_path = os.path.join(dest_dir, dest_dict_name, dest_dict_name + ".babylon")
         if not os.path.exists(dest_path) or overwrite:
-          convert_with_aksharamukha(source_path=source_dict_path, dest_path=dest_path, source_script=source_script, dest_script=dest_script, pre_options=pre_options, post_options=post_options)
+          if source_script == "Tamil" and "en-head" not in source_dir:
+            os.makedirs(os.path.dirname(source_dict_path), exist_ok=True)
+            shutil.copy(source_dict_path, dest_path)
+            definitions_helper.transform_entries(file_path=dest_path, transformer=lipi.transliterate_tamil, dry_run=False, dest_script=dest_script)
+          else:
+            convert_with_aksharamukha(source_path=source_dict_path, dest_path=dest_path, source_script=source_script, dest_script=dest_script, pre_options=pre_options, post_options=post_options)
         else:
           logging.info("Skipping %s as it exists", dest_path)
       else:
         logging.warning("did not find %s", source_dict_path)
-
-
-def transliterate_headword_with_sanscript(file_path, source_script=sanscript.ISO, dest_script=sanscript.DEVANAGARI, dry_run=False):
-  file_path = str(file_path)
-  tmp_file_path = file_path + "_fixed"
-  with codecs.open(file_path, "r", 'utf-8') as file_in:
-    lines = file_in.readlines()
-    with codecs.open(tmp_file_path, "w", 'utf-8') as file_out:
-      for index, line in enumerate(lines):
-        if index % 3 == 0:
-          line = sanscript.transliterate(data=line, _from=source_script, _to=dest_script)
-        line = line
-        file_out.write(line)
-        if dry_run:
-          print(line)
-  if not dry_run:
-    os.remove(file_path)
-    os.rename(src=tmp_file_path, dst=file_path)

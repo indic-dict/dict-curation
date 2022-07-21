@@ -45,17 +45,20 @@ def process_telugu_dicts():
   source_dir = "/home/vvasuki/indic-dict/stardict_all/stardict-telugu/te-head/te-entries"
   lipi.process_dir(source_script=GeneralMap.TELUGU, dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir)
 
-def process_tamil_dicts():
+def process_tamil_dicts(overwrite):
   pre_options = ["TamilTranscribe"]
-  source_dir = "/home/vvasuki/indic-dict/stardict_all/stardict-tamil/ta-head/en-entries"
-  lipi.process_dir(source_script="Tamil", dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir, pre_options=pre_options)
+  # source_dir = "/home/vvasuki/indic-dict/stardict_all/stardict-tamil/ta-head/en-entries"
+  # lipi.process_dir(source_script="Tamil", dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir, pre_options=pre_options, overwrite=overwrite)
+  # # 
+  # source_dir = "/home/vvasuki/indic-dict/stardict_all/stardict-tamil/ta-head/ta-entries"
+  # lipi.process_dir(source_script="Tamil", dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir, pre_options=pre_options, overwrite=overwrite)
 
-  source_dir = "/home/vvasuki/indic-dict/stardict_all/stardict-tamil/ta-head/ta-entries"
-  lipi.process_dir(source_script="Tamil", dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir, pre_options=pre_options)
-
-  source_dir = "/home/vvasuki/indic-dict/stardict_all/stardict-tamil/en-head/"
-  lipi.process_dir(source_script="Tamil", dest_script="ISO", source_dir=source_dir, pre_options=pre_options)
-
+  # source_dir = "/home/vvasuki/indic-dict/stardict_all/stardict-tamil/en-head/"
+  # lipi.process_dir(source_script="Tamil", dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir, pre_options=pre_options, overwrite=overwrite)
+  # 
+  # source_dir = "/home/vvasuki/indic-dict/stardict_all/stardict-tamil/en-head/"
+  # lipi.process_dir(source_script="Tamil", dest_script="ISO", source_dir=source_dir, pre_options=pre_options, overwrite=overwrite)
+ 
 
 
 def process_kannada_dicts():
@@ -87,7 +90,7 @@ def process_gujarati_dicts():
 
 
 if __name__ == '__main__':
-  process_tamil_dicts()
+  process_tamil_dicts(overwrite=True)
   # process_telugu_dicts()
   # process_urdu_dicts()
   # process_gujarati_dicts()

@@ -2,6 +2,7 @@ import codecs
 import itertools
 import logging
 import os
+import subprocess
 
 import aksharamukha
 from indic_transliteration import detect
@@ -17,28 +18,6 @@ for handler in logging.root.handlers[:]:
 logging.basicConfig(
   level=logging.DEBUG,
   format="%(levelname)s:%(asctime)s:%(module)s:%(lineno)d %(message)s")
-
-
-def transliterate_tamil(headwords, definition, dest_script="Devanagari"):
-  new_headwords = []
-  transcribed_headwords =[]
-  for headword in headwords:
-    headword_script = detect.detect(headword).lower()
-    if headword_script == dest_script.lower():
-      continue
-    else:
-      new_headwords.append(headword)
-      if headword_script == "tamil":
-        new_headword = aksharamukha.transliterate.process(src="Tamil", tgt=dest_script, txt=headword, nativize = True, pre_options = [], post_options = [])
-        transcribed_headwords.append(new_headword)
-        new_headword = aksharamukha.transliterate.process(src="Tamil", tgt=dest_script, txt=headword, nativize = True, pre_options = ["TamilTranscribe"], post_options = [])
-        transcribed_headwords.append(new_headword)
-        new_headword = aksharamukha.transliterate.process(src="Tamil", tgt=dest_script, txt=headword, nativize = True, pre_options = ["TamilTranscribeDialect"], post_options = [])
-        transcribed_headwords.append(new_headword)
-  new_headwords.extend(transcribed_headwords)
-  definition = aksharamukha.transliterate.process(src="Tamil", tgt=dest_script, txt=definition, nativize = True, pre_options = ["TamilTranscribe"], post_options = [])
-  definition = f"{transcribed_headwords.join('|')}<br>{definition}"
-  return (new_headwords, definition)
 
 
 def get_definitions_map(in_path, do_fix_newlines=False, definitions_list=None):
@@ -83,3 +62,31 @@ def get_definitions_map(in_path, do_fix_newlines=False, definitions_list=None):
     logging.warning("empty_headwords: %d , empty_definitions: %d from %s", empty_headwords, empty_definitions, in_path)
   logging.info("Getting %d definitions for %d headwords from %s" % (definition_lines, len(definitions), in_path))
   return definitions
+
+
+def transform_entries(file_path, transformer, dry_run=False, *args, **kwargs):
+  from dict_curation.babylon import header_helper
+  line_1_index = header_helper.get_non_header_line_1_index(file_path=file_path)
+  tmp_file_path = file_path + "_fixed"
+  with codecs.open(file_path, "r", 'utf-8') as file_in:
+    lines = file_in.readlines()
+    with codecs.open(tmp_file_path, "w", 'utf-8') as file_out:
+      progress_bar = tqdm(total=int(subprocess.check_output(['wc', '-l', file_path]).split()[0]), desc="Lines", position=0)
+      for line_number, line in enumerate(lines):
+        if line_number >= line_1_index and (line_number - line_1_index) % 3 == 0:
+          # line = line.replace("‍", "").replace("~", "")
+          headwords = line.strip().split("|")
+          (new_headwords, lines[line_number + 1]) = transformer(headwords=headwords, definition=lines[line_number + 1], *args, **kwargs)
+          # As of Python 3.7 (and CPython 3.6), standard dict is guaranteed to preserve order and is more performant than OrderedDict.
+          dest_line = "|".join(dict.fromkeys(headwords + new_headwords))
+          if not dest_line.endswith("\n"):
+            dest_line = dest_line + "\n"
+        else:
+          dest_line = line
+        file_out.write(dest_line)
+        progress_bar.update(1)
+        if dry_run:
+          print(dest_line)
+  if not dry_run:
+    os.remove(file_path)
+    os.rename(src=tmp_file_path, dst=file_path)

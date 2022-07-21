@@ -3,11 +3,7 @@ import logging
 
 # Remove all handlers associated with the root logger object.
 import os
-import subprocess
 from pathlib import Path
-
-from tqdm import tqdm
-
 
 for handler in logging.root.handlers[:]:
   logging.root.removeHandler(handler)
@@ -35,31 +31,4 @@ def dump(dest_path, definitions, headers=None):
     for definition in definitions:
       f.write(f"{'|'.join(definition.headwords_tuple)}\n{definition.meaning.strip()}\n\n")
 
-
-def transform_entries(file_path, headword_transformer, dry_run=False):
-  from dict_curation.babylon import header_helper
-  line_1_index = header_helper.get_non_header_line_1_index(file_path=file_path)
-  tmp_file_path = file_path + "_fixed"
-  with codecs.open(file_path, "r", 'utf-8') as file_in:
-    lines = file_in.readlines()
-    with codecs.open(tmp_file_path, "w", 'utf-8') as file_out:
-      progress_bar = tqdm(total=int(subprocess.check_output(['wc', '-l', file_path]).split()[0]), desc="Lines", position=0)
-      for line_number, line in enumerate(lines):
-        if line_number >= line_1_index and (line_number + 1 - line_1_index) % 3 == 0:
-          # line = line.replace("‍", "").replace("~", "")
-          headwords = line.strip().split("|")
-          (new_headwords, lines[line_number + 1]) = headword_transformer(headwords=headwords, definition=lines[line_number + 1])
-          # As of Python 3.7 (and CPython 3.6), standard dict is guaranteed to preserve order and is more performant than OrderedDict.
-          dest_line = "|".join(dict.fromkeys(headwords + new_headwords))
-          if not dest_line.endswith("\n"):
-            dest_line = dest_line + "\n"
-        else:
-          dest_line = line
-        file_out.write(dest_line)
-        progress_bar.update(1)
-        if dry_run:
-          print(dest_line)
-  if not dry_run:
-    os.remove(file_path)
-    os.rename(src=tmp_file_path, dst=file_path)
 
