@@ -31,6 +31,14 @@ with open('requirements.txt', 'r') as f:
         ] if s != ''
     ]
 
+
+with open('extras.txt', 'r') as f:
+    install_extras = [
+        s for s in [
+            line.split('#', 1)[0].strip(' \t\n') for line in f
+        ] if s != ''
+    ]
+
 setup(
     name='dict_curation',
 
@@ -97,6 +105,7 @@ setup(
     extras_require={
         # 'dev': ['check-manifest'],
         'test': ['pytest'],
+        'extras': install_extras,
     },
 
     # If there are data files included in your packages that need to be

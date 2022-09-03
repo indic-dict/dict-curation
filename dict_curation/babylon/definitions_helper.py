@@ -4,7 +4,6 @@ import logging
 import os
 import subprocess
 
-import aksharamukha
 from indic_transliteration import detect
 from tqdm import tqdm
 
