@@ -2,6 +2,7 @@ import logging
 import os
 from pathlib import Path
 
+import doc_curation.md.content_processor.sanskrit_helper
 import regex
 from indic_transliteration import sanscript
 
@@ -31,7 +32,7 @@ for file in data_files:
                 continue
             roots = entry_parts[0].strip().split(",")
             roots = [root.strip() for root in roots]
-            roots.extend([sanscript.SCHEMES[sanscript.DEVANAGARI].fix_lazy_anusvaara(root) for root in roots])
+            roots.extend([doc_curation.md.content_processor.sanskrit_helper.fix_lazy_anusvaara(root) for root in roots])
             from  more_itertools import unique_everseen
             roots = list(unique_everseen(roots))
             for root in roots:
