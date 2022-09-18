@@ -5,8 +5,7 @@ import codecs
 import logging
 import os
 
-import doc_curation.md.content_processor.sanskrit_helper
-import indic_transliteration
+import doc_curation.utils.sanskrit_helper
 from indic_transliteration import sanscript
 from indic_transliteration.detect import detect
 
@@ -29,7 +28,7 @@ def import_dict(source_file_path, dest_file_path, delimiter=','):
         headwords.append(headword_dev)
       else:
         headword_dev = headwords[0]
-      headword_dev_non_lazy = doc_curation.md.content_processor.sanskrit_helper.fix_lazy_anusvaara(headword_dev, omit_sam=False, omit_yrl=True, ignore_padaanta=True)
+      headword_dev_non_lazy = doc_curation.utils.sanskrit_helper.fix_lazy_anusvaara(headword_dev, omit_sam=False, omit_yrl=True, ignore_padaanta=True)
       if headword_dev_non_lazy != headword_dev:
         headwords.append(headword_dev_non_lazy)
       meaning = items[1].replace("\n", "<br>")

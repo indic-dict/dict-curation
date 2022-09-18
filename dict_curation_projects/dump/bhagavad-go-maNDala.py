@@ -5,7 +5,7 @@ import os
 from functools import partial
 from multiprocessing import Pool
 
-import doc_curation.md.content_processor.sanskrit_helper
+import doc_curation.utils.sanskrit_helper
 import regex
 import requests
 import tqdm
@@ -17,7 +17,6 @@ from curation_utils import scraping
 
 import dict_curation.babylon.cleaner
 import dict_curation.babylon.definitions
-from dict_curation import babylon
 
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
@@ -146,7 +145,7 @@ def dump_letter_definitions(letter, in_path_dir, out_path_dir, out_path_dir_deva
             if "શોધી રહ્યા છે" in definition:
                 incomplete_count = incomplete_count + 1
             devanagari_headword = sanscript.transliterate(data=headword, _from=sanscript.GUJARATI, _to=sanscript.DEVANAGARI)
-            devanagari_headword = doc_curation.md.content_processor.sanskrit_helper.fix_lazy_anusvaara(devanagari_headword)
+            devanagari_headword = doc_curation.utils.sanskrit_helper.fix_lazy_anusvaara(devanagari_headword)
             definition_devanagari = sanscript.transliterate(data=definition, _from=sanscript.GUJARATI, _to=sanscript.DEVANAGARI)
             devanagari_entry = "%s|%s\n%s\n\n" % (headword, devanagari_headword, definition_devanagari.replace("  ॥", "।"))
             file_out.writelines(["%s|%s\n%s\n\n" % (headword, devanagari_headword, definition)])
