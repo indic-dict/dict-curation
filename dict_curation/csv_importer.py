@@ -8,6 +8,13 @@ import os
 import doc_curation.utils.sanskrit_helper
 from indic_transliteration import sanscript
 from indic_transliteration.detect import detect
+# Remove all handlers associated with the root logger object.
+
+for handler in logging.root.handlers[:]:
+  logging.root.removeHandler(handler)
+logging.basicConfig(
+  level=logging.DEBUG,
+  format="%(levelname)s:%(asctime)s:%(module)s:%(lineno)d %(message)s")
 
 
 def decomment(csvfile):
