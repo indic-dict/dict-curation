@@ -20,7 +20,7 @@ index_indexorum = "https://raw.githubusercontent.com/indic-dict/stardict-index/m
 
 # download the url into dir
 # if dir does not exist create it
-def dlfile(url, dir, force_download=True):
+def dlfile(url, dir, overwrite=True):
   os.makedirs(dir, exist_ok=True)
   logging.info(f"Downloading {url} to {dir}")
   # Open the url
@@ -28,7 +28,7 @@ def dlfile(url, dir, force_download=True):
     f = urlopen(url)
     localpath = dir + "/" + os.path.basename(url)
     # Open our local file for writing
-    if not force_download:
+    if not overwrite:
       if os.path.isfile(localpath):  # check if this file exists
         logging.info("skipped %s as it already exists" % localpath)
         return localpath
@@ -64,16 +64,19 @@ def get_url_list(indexURL, verbose=False):
     return []
 
 
-def download_extract(dict_URL, tgz_download_directory, download_dir, force_download):
+def download_extract(dict_URL, tgz_download_directory, dict_dest_dir, overwrite):
   # assert dictfilename[-7:] == ".tar.gz", dictfilename
   try:
-    localpath = dlfile(dict_URL, tgz_download_directory, force_download)
+    localpath = dlfile(dict_URL, tgz_download_directory, overwrite)
     dictfilename = os.path.basename(dict_URL)
-    t = tarfile.open(localpath, 'r')
     thedictfilenamelen = len(dictfilename)
     # Handle filenames like: kRdanta-rUpa-mAlA__2016-02-20_23-22-27
     subDirnameToExtract = dictfilename[:-8].split("__")[0]
-    full_path = os.path.join(download_dir, subDirnameToExtract)
+    full_path = os.path.join(dict_dest_dir, subDirnameToExtract)
+    if os.path.exists(os.path.join(dict_dest_dir, subDirnameToExtract, f"{subDirnameToExtract}.ifo")) and not overwrite:
+      logging.info(f"Skipping extract {dict_URL} to {full_path}")
+      return
+    t = tarfile.open(localpath, 'r')
     logging.info(f"extract {dict_URL} to {full_path}")
     t.extractall(full_path)
   except Exception as e:
@@ -81,7 +84,7 @@ def download_extract(dict_URL, tgz_download_directory, download_dir, force_downl
 
 def download_dictionaries(tgz_download_directory,
                           dict_extract_dir, indexes=None,
-                          maxcount=1, force_download=False, verbose=False):
+                          maxcount=1, overwrite=False, verbose=False):
   if indexes is None:
     logging.info("Getting  index_indexorum")
     indexes = get_url_list(index_indexorum)
@@ -98,7 +101,7 @@ def download_dictionaries(tgz_download_directory,
       final_dir = regex.sub("/raw/gh-pages/", "/", final_dir)
       final_dir = regex.sub("/tars/", "/", final_dir)
       final_dir = os.path.dirname(final_dir)
-      download_extract(adict, tgz_download_directory, final_dir, force_download)
+      download_extract(adict, tgz_download_directory, final_dir, overwrite)
       count += 1
       if count == -1:
         continue  # no limit to download
@@ -134,7 +137,8 @@ def set_dir():
 if __name__ == '__main__':
   import argparse
   parser = argparse.ArgumentParser()
-  parser.add_argument("--remove_old", help="increase output verbosity")
+  parser.add_argument("--remove_old", help="Remove all old dicts - including obsolete ones.")
+  parser.add_argument("--overwrite", help="overwrite existing dicts")
   args = parser.parse_args()
 
   dict_dir = "/opt/dicts/stardict"
@@ -143,5 +147,5 @@ if __name__ == '__main__':
     logging.warning("Removing preexisting files in destination. Press any key to continue, or Ctrl C to exit.")
     input()
     shutil.rmtree(dict_dir, ignore_errors=True)
-  download_dictionaries(tmp_dir, dict_dir, indexes=None, maxcount=-1, force_download=False,
+  download_dictionaries(tmp_dir, dict_dir, indexes=None, maxcount=-1, overwrite=bool(args.overwrite),
                         verbose=True)
