@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 from urllib.request import urlopen
 from urllib.error import URLError, HTTPError
 import tarfile
@@ -47,16 +48,20 @@ def get_url_list(indexURL, verbose=False):
   if verbose:
     logging.info("Processing index %s" % indexURL)
   # download this index and go through it line by line
-  response = urlopen(indexURL)
-  for line in response:
-    line = line.decode(encoding)
-    line = line.strip()
-    # dict_URL is a URl to a .tar.gz file
-    if line != "" and not line.startswith("#"):
-      if line.startswith("<") and line.endswith(">"):
-        line = line[1:-1]
-      returnlist.append(line)
-  return returnlist
+  try:
+    response = urlopen(indexURL)
+    for line in response:
+      line = line.decode(encoding)
+      line = line.strip()
+      # dict_URL is a URl to a .tar.gz file
+      if line != "" and not line.startswith("#"):
+        if line.startswith("<") and line.endswith(">"):
+          line = line[1:-1]
+        returnlist.append(line)
+    return returnlist
+  except Exception as e:
+    logging.error(f"Failed with {indexURL} - {e}.")
+    return []
 
 
 def download_extract(dict_URL, tgz_download_directory, download_dir, force_download):
@@ -127,7 +132,16 @@ def set_dir():
 
 
 if __name__ == '__main__':
+  import argparse
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--remove_old", help="increase output verbosity")
+  args = parser.parse_args()
+
   dict_dir = "/opt/dicts/stardict"
   tmp_dir = os.path.join(dict_dir, "tmp")
+  if os.path.exists(dict_dir) and args.remove_old:
+    logging.warning("Removing preexisting files in destination. Press any key to continue, or Ctrl C to exit.")
+    input()
+    shutil.rmtree(dict_dir, ignore_errors=True)
   download_dictionaries(tmp_dir, dict_dir, indexes=None, maxcount=-1, force_download=False,
                         verbose=True)
