@@ -11,6 +11,7 @@ from dict_curation.babylon import header_helper
 from dict_curation.babylon.definitions_helper import get_definitions_map
 
 
+# Use get_definitions_map to fix.
 def fix_newlines(lines):
   # TODO: use line_1_index = header_helper.get_non_header_line_index(file_path=source_path)
   for (index, line) in tqdm(enumerate(lines)):
