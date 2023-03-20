@@ -37,7 +37,10 @@ def get_dict(dir_path=BASE_DIR):
     id = md_file.file_path.replace(dir_path, "").replace(".md", "")
     id = regex.sub("_.+?(?=/|$)", "", id)
     for word in words_sasvara:
-      dict_out[word].append(f"{id}: {muula}")
+      if regex.search(accent.ACCENTS_PATTERN, word):
+        dict_out[word].append(f"{id}")
+      else:
+        dict_out[word].append(f"{id}: {muula}")
   return dict_out
 
 
@@ -52,7 +55,12 @@ def dump_babylon(dest_dir):
     for sasvara_word in visvara_to_sasvara[visvara_word]:
       citations = "<br>".join(sasvara_word_dict[sasvara_word])
       meaning = f"{sasvara_word}<br><br>{citations}"
-      defintion = Definition(headwords_tuple=tuple([visvara_word]), meaning=meaning)
+      headwords = [visvara_word]
+      if visvara_word.endswith("ः"):
+        headwords.append(visvara_word[:-1])
+      elif visvara_word.endswith("म्"):
+        headwords.append(visvara_word[:-2])
+      defintion = Definition(headwords_tuple=tuple(headwords), meaning=meaning)
       definitions.append(defintion)
 
   logging.info(f"Got {len(definitions)}.")
