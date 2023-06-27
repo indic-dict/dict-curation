@@ -3,6 +3,16 @@ import regex
 import dict_curation.babylon
 import dict_curation.babylon.definitions_helper
 from dict_curation.babylon import headwords_helper
+from doc_curation.utils import sanskrit_helper
+
+
+def add_sanskrit_roots(file_path, dry_run=False):
+  def root_adder(headwords, definition):
+    new_headwords = []
+    for headword in headwords:
+      new_headwords.append(sanskrit_helper.deduce_root(text=headword))
+    return (new_headwords, definition)
+  dict_curation.babylon.definitions_helper.transform_entries(file_path=file_path, transformer=root_adder, dry_run=dry_run)
 
 
 def fix_sheth(dry_run=False):
@@ -16,5 +26,5 @@ def fix_sheth(dry_run=False):
 
 
 if __name__ == '__main__':
-  fix_sheth(dry_run=False)
+  add_sanskrit_roots(file_path="/home/vvasuki/gitland/indic-dict_stardict/stardict-sanskrit-kAvya/mahAbhArata-kRShNAchArya/mahAbhArata-kRShNAchArya.babylon", dry_run=False)
   pass
