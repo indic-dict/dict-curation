@@ -23,10 +23,10 @@ def decomment(csvfile):
     if raw and row != "": yield row
 
 
-def import_dict(source_file_path, dest_file_path, delimiter=','):
+def import_2col_dict(source_file_path, dest_file_path, delimiter=','):
   logging.info("Importing %s to %s", source_file_path, dest_file_path)
   os.makedirs(name=os.path.dirname(dest_file_path), exist_ok=True)
-  with open(source_file_path, 'rU') as csvfile, codecs.open(dest_file_path, "w", "utf-8") as targetFile:
+  with open(source_file_path, 'rU') as csvfile, codecs.open(dest_file_path, "w", "utf-8") as target_file:
     for items in csv.reader(decomment(csvfile), delimiter=delimiter):
       headwords = [items[0]]
       source_script = detect(text=headwords[0])
@@ -39,7 +39,7 @@ def import_dict(source_file_path, dest_file_path, delimiter=','):
       if headword_dev_non_lazy != headword_dev:
         headwords.append(headword_dev_non_lazy)
       meaning = items[1].replace("\n", "<br>")
-      targetFile.write("%s\n%s\n\n" % ("|".join(headwords), meaning))
+      target_file.write("%s\n%s\n\n" % ("|".join(headwords), meaning))
 
 
 
