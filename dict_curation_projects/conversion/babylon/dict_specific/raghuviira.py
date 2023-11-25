@@ -23,6 +23,7 @@ def make_babylon(source_file_path, dest_file_path, delimiter='\t'):
     for items in csv.reader(csvfile, delimiter=delimiter):
       if len(items) < 3:
         logging.fatal(items)
+      # continue
       headword_field = items[0].replace("\n", " ")
       subject_field = items[1]
       definition_field = "<BR>".join(items[2:]).replace("\n", "<BR>")
