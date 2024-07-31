@@ -15,7 +15,7 @@ def process_sinhala_dicts():
 
 
 def process_panjabi_dicts():
-  lipi.process_dir(source_script=GeneralMap.GURMUKHI, dest_script=GeneralMap.DEVANAGARI, source_dir="/home/vvasuki/indic-dict/stardict_all/stardict-panjabi/pa-head/en-entries", dest_dir="/home/vvasuki/indic-dict/stardict_all/stardict-panjabi/pa-head_dev-script/en-entries")
+  lipi.process_dir(source_script='Gurmukhi', dest_script=GeneralMap.DEVANAGARI, source_dir="/home/vvasuki/indic-dict/stardict_all/stardict-panjabi/pa-head/en-entries", dest_dir="/home/vvasuki/indic-dict/stardict_all/stardict-panjabi/pa-head_dev-script/en-entries")
 
 def process_bengali_dicts():
   lipi.process_dir(source_script=GeneralMap.BENGALI, dest_script=GeneralMap.DEVANAGARI, source_dir="/home/vvasuki/indic-dict/stardict_all/stardict-bengali/bn-head/en-entries", dest_dir="/home/vvasuki/indic-dict/stardict_all/stardict-bengali/bn-head_dev-script/en-entries")

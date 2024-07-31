@@ -1,10 +1,6 @@
 import codecs
 import itertools
-import logging
-import os
-import subprocess
 
-from indic_transliteration import detect
 from tqdm import tqdm
 
 from dict_curation import Definition
@@ -63,29 +59,3 @@ def get_definitions_map(in_path, do_fix_newlines=False, definitions_list=None):
   return definitions
 
 
-def transform_entries(file_path, transformer, dry_run=False, *args, **kwargs):
-  from dict_curation.babylon import header_helper
-  line_1_index = header_helper.get_non_header_line_1_index(file_path=file_path)
-  tmp_file_path = file_path + "_fixed"
-  with codecs.open(file_path, "r", 'utf-8') as file_in:
-    lines = file_in.readlines()
-    with codecs.open(tmp_file_path, "w", 'utf-8') as file_out:
-      progress_bar = tqdm(total=int(subprocess.check_output(['wc', '-l', file_path]).split()[0]), desc="Lines", position=0)
-      for line_number, line in enumerate(lines):
-        if line_number >= line_1_index and (line_number - line_1_index) % 3 == 0:
-          # line = line.replace("‍", "").replace("~", "")
-          headwords = line.strip().split("|")
-          (new_headwords, lines[line_number + 1]) = transformer(headwords=headwords, definition=lines[line_number + 1], *args, **kwargs)
-          # As of Python 3.7 (and CPython 3.6), standard dict is guaranteed to preserve order and is more performant than OrderedDict.
-          dest_line = "|".join(dict.fromkeys(headwords + new_headwords))
-          if not dest_line.endswith("\n"):
-            dest_line = dest_line + "\n"
-        else:
-          dest_line = line
-        file_out.write(dest_line)
-        progress_bar.update(1)
-        if dry_run:
-          print(dest_line)
-  if not dry_run:
-    os.remove(file_path)
-    os.rename(src=tmp_file_path, dst=file_path)

@@ -8,8 +8,9 @@ import aksharamukha.transliterate
 import regex
 import tqdm
 from aksharamukha import GeneralMap
-from indic_transliteration import sanscript, convert_with_aksharamukha, detect
+from indic_transliteration import sanscript, aksharamukha_helper, detect
 
+import dict_curation.babylon
 from dict_curation.babylon import lipi, definitions_helper
 
 GeneralMap.DEVANAGARI = "Devanagari"
@@ -26,11 +27,11 @@ logging.basicConfig(
 
 
 
-def transliterate_headword_with_sanscript(headwords, definition, source_script=sanscript.ISO, dest_script=sanscript.DEVANAGARI, dry_run=False):
+def transliterate_headword_with_sanscript(headwords, definition, source_script=sanscript.IAST, dest_script=sanscript.DEVANAGARI, dry_run=False):
   new_headwords = []
   for headword in headwords:
     new_headwords.append(sanscript.transliterate(data=headword, _from=source_script, _to=dest_script))
-  return (list(dict.fromkeys(headwords + new_headwords)), definition)
+  return (list(dict.fromkeys(new_headwords)), definition)
 
 
 def remove_devanagari_headwords(headwords, definition):
@@ -100,9 +101,9 @@ def process_dir(source_script, dest_script, source_dir, dest_dir=None, pre_optio
           if source_script == "Tamil" and "en-head" not in source_dir:
             os.makedirs(os.path.dirname(source_dict_path), exist_ok=True)
             shutil.copy(source_dict_path, dest_path)
-            definitions_helper.transform_entries(file_path=dest_path, transformer=lipi.transliterate_tamil, dry_run=False, dest_script=dest_script)
+            dict_curation.babylon.transform(file_path=dest_path, transformer=lipi.transliterate_tamil, dry_run=False, dest_script=dest_script)
           else:
-            convert_with_aksharamukha(source_path=source_dict_path, dest_path=dest_path, source_script=source_script, dest_script=dest_script, pre_options=pre_options, post_options=post_options)
+            aksharamukha_helper.convert_file(source_path=source_dict_path, dest_path=dest_path, source_script=source_script, dest_script=dest_script, pre_options=pre_options, post_options=post_options)
         else:
           logging.info("Skipping %s as it exists", dest_path)
       else:

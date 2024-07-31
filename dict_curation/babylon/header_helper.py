@@ -23,7 +23,7 @@ def get_headers(file_path):
       if "=" not in line:
         logging.warning("Strange line: %s in %s", line, file_path)
         continue
-      [key, value] = line.split("=")
+      [key, value] = line.split("=", 1)
       headers[key] = value
 
 
