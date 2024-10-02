@@ -75,11 +75,11 @@ def transliterate_tamil(headwords, definition, dest_script="Devanagari"):
         transcribed_headwords.append(new_headword)
         new_headword = aksharamukha.transliterate.process(src="Tamil", tgt=dest_script, txt=headword, nativize = True, pre_options = ["TamilTranscribeDialect"], post_options = [])
         transcribed_headwords.append(new_headword)
-        new_headword = aksharamukha_helper.transliterate_tamil(text=headword)
+        new_headword = aksharamukha_helper.transliterate_tamil(text=headword, dest_script=dest_script)
         transcribed_headwords.append(new_headword)
   new_headwords.extend(transcribed_headwords)
   new_headwords = list(dict.fromkeys(new_headwords))
-  definition = aksharamukha_helper.transliterate_tamil(text=definition)
+  definition = aksharamukha_helper.transliterate_tamil(text=definition, dest_script=dest_script)
   definition = f"{'|'.join(new_headwords)}<br>{definition}"
   return (new_headwords, definition)
 
