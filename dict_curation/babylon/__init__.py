@@ -37,6 +37,7 @@ def dump(dest_path, definitions, headers=None):
 
 def transform(file_path, transformer, dry_run=False, *args, **kwargs):
   from dict_curation.babylon import header_helper
+  logging.info("Transforming %s", file_path)
   line_1_index = header_helper.get_non_header_line_1_index(file_path=file_path)
   tmp_file_path = file_path + "_fixed"
   with codecs.open(file_path, "r", 'utf-8') as file_in:

@@ -75,9 +75,11 @@ def transliterate_tamil(headwords, definition, dest_script="Devanagari"):
         transcribed_headwords.append(new_headword)
         new_headword = aksharamukha.transliterate.process(src="Tamil", tgt=dest_script, txt=headword, nativize = True, pre_options = ["TamilTranscribeDialect"], post_options = [])
         transcribed_headwords.append(new_headword)
+        new_headword = aksharamukha_helper.transliterate_tamil(text=headword)
+        transcribed_headwords.append(new_headword)
   new_headwords.extend(transcribed_headwords)
   new_headwords = list(dict.fromkeys(new_headwords))
-  definition = aksharamukha.transliterate.process(src="Tamil", tgt=dest_script, txt=definition, nativize = True, pre_options = ["TamilTranscribe"], post_options = [])
+  definition = aksharamukha_helper.transliterate_tamil(text=definition)
   definition = f"{'|'.join(new_headwords)}<br>{definition}"
   return (new_headwords, definition)
 
@@ -99,7 +101,7 @@ def process_dir(source_script, dest_script, source_dir, dest_dir=None, pre_optio
         dest_path = os.path.join(dest_dir, dest_dict_name, dest_dict_name + ".babylon")
         if not os.path.exists(dest_path) or overwrite:
           if source_script == "Tamil" and "en-head" not in source_dir:
-            os.makedirs(os.path.dirname(source_dict_path), exist_ok=True)
+            os.makedirs(os.path.dirname(dest_path), exist_ok=True)
             shutil.copy(source_dict_path, dest_path)
             dict_curation.babylon.transform(file_path=dest_path, transformer=lipi.transliterate_tamil, dry_run=False, dest_script=dest_script)
           else:
