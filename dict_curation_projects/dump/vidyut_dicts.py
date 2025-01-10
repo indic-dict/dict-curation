@@ -15,6 +15,15 @@ v = Vyakarana()
 data = Data("/home/vvasuki/gitland/ambuda-org/vidyut-latest/prakriya")
 kosha = Kosha("/home/vvasuki/gitland/ambuda-org/vidyut-latest/kosha")
 
+
+def dev(x):
+  return transliterate(x, Scheme.Slp1, Scheme.Devanagari)
+
+
+def slp(x):
+  return transliterate(x, Scheme.Devanagari, Scheme.Slp1)
+
+
 def dump_kRdantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/kRdanta/vidyut/"):
   dhatus = [e.dhatu for e in data.load_dhatu_entries()]
   sanaadi_dict ={
@@ -36,23 +45,23 @@ def dump_kRdantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sans
       dhaatu_str = f"{dhaatu.aupadeshika} ({dhaatu.gana})"
       if dhaatu.antargana is not None:
         dhaatu_str = f"{dhaatu_str} ({dhaatu.antargana})"
-      headwords = [transliterate(dhaatu.aupadeshika, Scheme.Slp1, Scheme.Devanagari)]
+      headwords = [dev(dhaatu.aupadeshika)]
       sanaadyanta = dhaatu.with_sanadi(sanadi)
       sanaadi_str = ""
       for p in v.derive(sanaadyanta):
-        sanaadyanta_str = transliterate(p.text, Scheme.Slp1, Scheme.Devanagari)
+        sanaadyanta_str = dev(p.text)
         if sanaadyanta_str not in headwords:
           headwords.append(sanaadyanta_str)
       if len(sanadi) > 0 :
         sanaadi_str = f" + {'+ '.join([x.name for x in sanaadyanta.sanadi])} = {sanaadyanta_str}"
-      entry = transliterate(f"{dhaatu_str}{sanaadi_str}", Scheme.Slp1, Scheme.Devanagari) + "<BR>"
+      entry = dev(f"{dhaatu_str}{sanaadi_str}") + "<BR>"
       for kRt in Krt.choices():
         anga = Pratipadika.krdanta(sanaadyanta, kRt)
         prakriyas = v.derive(anga)
         for p in prakriyas:
-          headwords.append(transliterate(p.text, Scheme.Slp1, Scheme.Devanagari))
+          headwords.append(dev(p.text))
           # logging.debug(f"{'|'.join(headwords)}\n{entry}\n")
-          entry += transliterate(f"+{kRt} = {p.text}", Scheme.Slp1, Scheme.Devanagari) + "<BR>"
+          entry += dev(f"+{kRt} = {p.text}") + "<BR>"
       defintion = Definition(headwords_tuple=tuple(headwords), meaning=entry)
       definitions.append(defintion)
     logging.info(f"Got {len(definitions)}.")
@@ -80,7 +89,7 @@ def dump_subantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sans
     for praatipadika in tqdm(kosha.pratipadikas()):
       if type(praatipadika) in [PratipadikaEntry.Krdanta]:
         continue
-      praatipadika_str = transliterate(praatipadika.pratipadika.text, Scheme.Slp1, Scheme.Devanagari)
+      praatipadika_str = dev(praatipadika.pratipadika.text)
       if not (praatipadika_str >= border[0] and praatipadika_str < border[1]):
         continue
       for linga in praatipadika.lingas:
@@ -98,13 +107,13 @@ def dump_subantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sans
             ))
             forms = []
             for prakriya in prakriyas:
-              pada_str = transliterate(prakriya.text, Scheme.Slp1, Scheme.Devanagari)
+              pada_str = dev(prakriya.text)
               headwords.add(pada_str)
               forms.append(pada_str)
             vachana_entry = ", ".join(forms)
             vachana_entries.append(vachana_entry)
           lines.append("; ".join(vachana_entries))
-        linga_str = transliterate(str(linga), Scheme.Slp1, Scheme.Devanagari)
+        linga_str = dev(str(linga))
         defintion = Definition(headwords_tuple=tuple(headwords), meaning=f"{praatipadika_str} {linga_str[:4]}<BR>{'<BR>'.join(lines)}")
         definitions.append(defintion)
     logging.info(f"Got {len(definitions)} for {dict_name}.")
@@ -126,15 +135,13 @@ def dump_taddhitaantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict
     'yrlv': ("य", "श"),
     'shal': ("श", "ा"),
   }
-  definitions = []
-  dict_name = "vidyut-taddhitAnta"
   for dict_name, border, in dicts.items():
     definitions = []
     dict_name = f"vidyut-taddhitAnta-{dict_name}"
     for praatipadika in tqdm(kosha.pratipadikas()):
       if type(praatipadika) in [PratipadikaEntry.Krdanta]:
         continue
-      praatipadika_str = transliterate(praatipadika.pratipadika.text, Scheme.Slp1, Scheme.Devanagari)
+      praatipadika_str = dev(praatipadika.pratipadika.text)
       headwords = OrderedSet()
       headwords.add(praatipadika_str)
       lines = []
@@ -142,10 +149,10 @@ def dump_taddhitaantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict
         anga = Pratipadika.taddhitanta(praatipadika.pratipadika, taddhita)
         prakriyas = v.derive(anga)
         if len(prakriyas) > 0:
-          derivatives = [transliterate(p.text, Scheme.Slp1, Scheme.Devanagari) for p in prakriyas]
+          derivatives = [dev(p.text) for p in prakriyas]
           headwords.extend(derivatives)
           lines.append(f'+ {taddhita} = {", ".join(derivatives)}')
-      linga_str = transliterate(",".join([str(linga) for linga in praatipadika.lingas]), Scheme.Slp1, Scheme.Devanagari)
+      linga_str = dev(",".join([str(linga) for linga in praatipadika.lingas]))
       defintion = Definition(headwords_tuple=tuple(headwords), meaning=f"{praatipadika_str} {linga_str}<BR>{'<BR>'.join(lines)}")
       definitions.append(defintion)
     logging.info(f"Got {len(definitions)}.")
@@ -154,8 +161,26 @@ def dump_taddhitaantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict
     babylon.dump(dest_path=dest_file_path, definitions=definitions, headers=headers)
 
 
+def print_prakriyA(shabda):
+  entries = kosha.get(slp(shabda))
+  if len(entries) == 0:
+    logging.error(f"Can't get entry for {shabda}.")
+    return
+  for entry in entries:
+    prakriyas = v.derive(entry)
+    for p in prakriyas:
+      steps = []
+      for step in p.history:
+        detail = f"{step.code} → {dev(','.join(step.result))} [A](https://ashtadhyayi.github.io/suutra/{step.code[:3]}/{step.code})"
+        steps.append(detail)
+      md_newline = '  \n'
+      logging.info(f"\n{md_newline.join(steps)}\n")
+  pass
+
+
 if __name__ == '__main__':
   pass
   # dump_kRdantas()
   # dump_subantas()
-  dump_taddhitaantas()
+  # dump_taddhitaantas()
+  print_prakriyA("वमितवत्")
