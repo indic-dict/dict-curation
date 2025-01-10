@@ -71,7 +71,8 @@ def dump_subantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sans
     'Tu': ("ट", "त"),
     'tu1': ("त", "प"),
     'pu': ("प", "य"),
-    'yu': ("य", "ा"),
+    'yrlv': ("य", "श"),
+    'shal': ("श", "ा"),
   }
   for dict_name, border, in dicts.items():
     definitions = []
