@@ -1,7 +1,7 @@
 import logging
 import os
 
-from chandas.svat.identify.identifier import OrderedSet
+from sanskrit_data.collection_helper import OrderedSet
 from tqdm import tqdm
 from vidyut.kosha import Kosha, PratipadikaEntry
 from vidyut.lipi import transliterate, Scheme
@@ -114,27 +114,48 @@ def dump_subantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sans
 
 
 def dump_taddhitaantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/taddhitAnta/vidyut/"):
+  dicts ={
+    'a': ("", "इ"),
+    'i': ("इ", "उ"),
+    'uch': ("उ", "क"),
+    'ku': ("क", "च"),
+    'chu': ("च", "ट"),
+    'Tu': ("ट", "त"),
+    'tu1': ("त", "प"),
+    'pu': ("प", "य"),
+    'yrlv': ("य", "श"),
+    'shal': ("श", "ा"),
+  }
   definitions = []
   dict_name = "vidyut-taddhitAnta"
-  for praatipadika in tqdm(kosha.pratipadikas()):
-    if type(praatipadika) in [PratipadikaEntry.Krdanta]:
-      continue
-    praatipadika_str = transliterate(praatipadika.pratipadika.text, Scheme.Slp1, Scheme.Devanagari)
-    for taddhita in Taddhita.choices():
-      anga = Pratipadika.taddhitanta(praatipadika, taddhita)
-      prakriyas = v.derive(anga)
-      for p in prakriyas:
-        print(taddhita, p.text)
-        # lines.append("; ".join(vachana_entries))
-      defintion = Definition(headwords_tuple=tuple(headwords), meaning=f"{praatipadika_str} {linga}<BR>{'<BR>'.join(lines)}")
+  for dict_name, border, in dicts.items():
+    definitions = []
+    dict_name = f"vidyut-taddhitAnta-{dict_name}"
+    for praatipadika in tqdm(kosha.pratipadikas()):
+      if type(praatipadika) in [PratipadikaEntry.Krdanta]:
+        continue
+      praatipadika_str = transliterate(praatipadika.pratipadika.text, Scheme.Slp1, Scheme.Devanagari)
+      headwords = OrderedSet()
+      headwords.add(praatipadika_str)
+      lines = []
+      for taddhita in Taddhita.choices():
+        anga = Pratipadika.taddhitanta(praatipadika.pratipadika, taddhita)
+        prakriyas = v.derive(anga)
+        if len(prakriyas) > 0:
+          derivatives = [transliterate(p.text, Scheme.Slp1, Scheme.Devanagari) for p in prakriyas]
+          headwords.extend(derivatives)
+          lines.append(f'+ {taddhita} = {", ".join(derivatives)}')
+      linga_str = transliterate(",".join([str(linga) for linga in praatipadika.lingas]), Scheme.Slp1, Scheme.Devanagari)
+      defintion = Definition(headwords_tuple=tuple(headwords), meaning=f"{praatipadika_str} {linga_str}<BR>{'<BR>'.join(lines)}")
       definitions.append(defintion)
-  logging.info(f"Got {len(definitions)}.")
-  dest_file_path = os.path.join(dest_dir, dict_name, f"{dict_name}.babylon")
-  headers = header_helper.get_default_headers(dest_file_path)
-  babylon.dump(dest_path=dest_file_path, definitions=definitions, headers=headers)
+    logging.info(f"Got {len(definitions)}.")
+    dest_file_path = os.path.join(dest_dir, dict_name, f"{dict_name}.babylon")
+    headers = header_helper.get_default_headers(dest_file_path)
+    babylon.dump(dest_path=dest_file_path, definitions=definitions, headers=headers)
 
 
 if __name__ == '__main__':
   pass
   # dump_kRdantas()
-  dump_subantas()
+  # dump_subantas()
+  dump_taddhitaantas()
