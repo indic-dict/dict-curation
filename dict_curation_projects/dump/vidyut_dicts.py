@@ -17,11 +17,11 @@ kosha = Kosha("/home/vvasuki/gitland/ambuda-org/vidyut-latest/kosha")
 
 
 def dev(x):
-  return transliterate(x, Scheme.Slp1, Scheme.Devanagari)
+  return transliterate(str(x), Scheme.Slp1, Scheme.Devanagari)
 
 
 def slp(x):
-  return transliterate(x, Scheme.Devanagari, Scheme.Slp1)
+  return transliterate(str(x), Scheme.Devanagari, Scheme.Slp1)
 
 
 def dump_kRdantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/kRdanta/vidyut/"):
@@ -122,7 +122,7 @@ def dump_subantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sans
     babylon.dump(dest_path=dest_file_path, definitions=definitions, headers=headers)
 
 
-def dump_taddhitaantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/taddhitAnta/vidyut/"):
+def dump_taddhitaantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/taddhitAnta/vidyut/", overwrite=False):
   dicts ={
     'a': ("", "इ"),
     'i': ("इ", "उ"),
@@ -131,32 +131,44 @@ def dump_taddhitaantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict
     'chu': ("च", "ट"),
     'Tu': ("ट", "त"),
     'tu1': ("त", "प"),
-    'pu': ("प", "य"),
-    'yrlv': ("य", "श"),
-    'shal': ("श", "ा"),
+    'p': ("प", "ब"),
+    'b': ("ब", "य"),
+    'yr': ("य", "ल"),
+    'lv': ("ल", "व"),
+    'sh': ("श", "स"),
+    's': ("स", "ह"),
+    'hal': ("ह", "ा"),
   }
   for dict_name, border, in dicts.items():
     definitions = []
     dict_name = f"vidyut-taddhitAnta-{dict_name}"
+    dest_file_path = os.path.join(dest_dir, dict_name, f"{dict_name}.babylon")
+    if not overwrite and os.path.exists(dest_file_path):
+      logging.info(f"Skipping {dict_name}")
+      continue
+    logging.info(f"Producing {dict_name}")
     for praatipadika in tqdm(kosha.pratipadikas()):
       if type(praatipadika) in [PratipadikaEntry.Krdanta]:
         continue
       praatipadika_str = dev(praatipadika.pratipadika.text)
+      if not (praatipadika_str >= border[0] and praatipadika_str < border[1]):
+        continue
       headwords = OrderedSet()
       headwords.add(praatipadika_str)
       lines = []
       for taddhita in Taddhita.choices():
+        if str(taddhita) == "YiW":
+          continue
         anga = Pratipadika.taddhitanta(praatipadika.pratipadika, taddhita)
         prakriyas = v.derive(anga)
         if len(prakriyas) > 0:
           derivatives = [dev(p.text) for p in prakriyas]
           headwords.extend(derivatives)
-          lines.append(f'+ {taddhita} = {", ".join(derivatives)}')
+          lines.append(f'+ {dev(taddhita)} = {", ".join(derivatives)}')
       linga_str = dev(",".join([str(linga) for linga in praatipadika.lingas]))
       defintion = Definition(headwords_tuple=tuple(headwords), meaning=f"{praatipadika_str} {linga_str}<BR>{'<BR>'.join(lines)}")
       definitions.append(defintion)
     logging.info(f"Got {len(definitions)}.")
-    dest_file_path = os.path.join(dest_dir, dict_name, f"{dict_name}.babylon")
     headers = header_helper.get_default_headers(dest_file_path)
     babylon.dump(dest_path=dest_file_path, definitions=definitions, headers=headers)
 
@@ -171,7 +183,8 @@ def print_prakriyA(shabda):
     for p in prakriyas:
       steps = []
       for step in p.history:
-        detail = f"{step.code} → {dev(','.join(step.result))} [A](https://ashtadhyayi.github.io/suutra/{step.code[:3]}/{step.code})"
+        url = "[A](https://ashtadhyayi.github.io/suutra/{step.code[:3]}/{step.code})"
+        detail = f"{step.code} → {dev(','.join(step.result))} {url}"
         steps.append(detail)
       md_newline = '  \n'
       logging.info(f"\n{md_newline.join(steps)}\n")
@@ -182,5 +195,5 @@ if __name__ == '__main__':
   pass
   # dump_kRdantas()
   # dump_subantas()
-  # dump_taddhitaantas()
-  print_prakriyA("वमितवत्")
+  dump_taddhitaantas()
+  # print_prakriyA("वमितवत्")
