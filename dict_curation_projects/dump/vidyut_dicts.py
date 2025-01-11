@@ -1,11 +1,15 @@
 import logging
 import os
+from copy import copy
 
+import regex
+from click.utils import make_default_short_help
 from sanskrit_data.collection_helper import OrderedSet
 from tqdm import tqdm
 from vidyut.kosha import Kosha, PratipadikaEntry
 from vidyut.lipi import transliterate, Scheme
-from vidyut.prakriya import Data, Vyakarana, Sanadi, Krt, Pratipadika, Vibhakti, Vacana, Linga, Pada, Taddhita
+from vidyut.prakriya import Data, Vyakarana, Sanadi, Krt, Pratipadika, Vibhakti, Vacana, Linga, Pada, Taddhita, \
+  DhatuPada, Lakara, Purusha, Prayoga
 
 from dict_curation import Definition
 from dict_curation import babylon
@@ -16,6 +20,28 @@ data = Data("/home/vvasuki/gitland/ambuda-org/vidyut-latest/prakriya")
 kosha = Kosha("/home/vvasuki/gitland/ambuda-org/vidyut-latest/kosha")
 
 
+sanaadi_dict_kRdanta ={
+  'vidyut-kRdanta': (),
+  'vidyut-Nic-kRdanta': (Sanadi.Ric,),
+  'vidyut-san-kRdanta': (Sanadi.san,),
+  'vidyut-yaN-kRdanta': (Sanadi.yaN,),
+  'vidyut-yaNluk-kRdanta': (Sanadi.yaNluk,),
+  'vidyut-san-Nic-kRdanta': (Sanadi.san, Sanadi.Ric),
+  'vidyut-Nic-san-kRdanta': (Sanadi.Ric, Sanadi.san)
+}
+
+
+sanaadi_dict_tiNanta ={
+  'vidyut-tiN': (),
+  'vidyut-Nic-tiN': (Sanadi.Ric,),
+  'vidyut-san-tiN': (Sanadi.san,),
+  'vidyut-yaN-tiN': (Sanadi.yaN,),
+  'vidyut-yaN-luk-tiN': (Sanadi.yaNluk,),
+  'vidyut-san-Nic-tiN': (Sanadi.san, Sanadi.Ric),
+  'vidyut-Nic-san-tiN': (Sanadi.Ric, Sanadi.san)
+}
+
+
 def dev(x):
   return transliterate(str(x), Scheme.Slp1, Scheme.Devanagari)
 
@@ -24,50 +50,103 @@ def slp(x):
   return transliterate(str(x), Scheme.Devanagari, Scheme.Slp1)
 
 
-def dump_kRdantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/kRdanta/vidyut/"):
-  dhatus = [e.dhatu for e in data.load_dhatu_entries()]
-  sanaadi_dict ={
-    'vidyut-kRdanta': (),
-    'vidyut-Nic-kRdanta': (Sanadi.Ric,),
-    'vidyut-san-kRdanta': (Sanadi.san,),
-    'vidyut-yaN-kRdanta': (Sanadi.yaN,),
-    'vidyut-yaNluk-kRdanta': (Sanadi.yaNluk,),
-    'vidyut-san-Nic-kRdanta': (Sanadi.san, Sanadi.Ric),
-    'vidyut-Nic-san-kRdanta': (Sanadi.Ric, Sanadi.san)
-  }
+
+def _get_kRdanta_entry(entry_head, headwords_in, sanaadyanta, *args, **kwargs):
+  entry = f"{entry_head}<BR>"
+  for kRt in Krt.choices():
+    anga = Pratipadika.krdanta(sanaadyanta, kRt)
+    prakriyas = v.derive(anga)
+    for p in prakriyas:
+      headwords_in.add(dev(p.text))
+      # logging.debug(f"{'|'.join(headwords)}\n{entry}\n")
+      entry += dev(f"+{kRt} = {p.text}") + "<BR>"
+
+  defintion = Definition(headwords_tuple=tuple(headwords_in), meaning=entry)
+  return [defintion]
 
 
-  v = Vyakarana()
+def _get_tiNanta_entry(entry_head, headwords_in, sanaadyanta, prayoga):
+  definitions = []
+  for lakara in Lakara.choices():
+    headwords = copy(headwords_in)
+    table_lines = []
+    for parasmai_mode in [DhatuPada.Parasmaipada, DhatuPada.Atmanepada]:
+      lines = []
+      pada_headwords = []
+      for purusha in Purusha.choices():
+        vacana_forms = []
+        for vacana in Vacana.choices():
+          prakriyas = v.derive(Pada.Tinanta(
+            dhatu=sanaadyanta,
+            prayoga=prayoga,
+            dhatu_pada=parasmai_mode,
+            lakara=lakara,
+            purusha=purusha,
+            vacana=vacana,
+          ))
+          forms = [dev(p.text) for p in prakriyas]
+          pada_headwords.extend(forms)
+          vacana_forms.append('/ '.join(forms))
+        puruSha_line = f"{'<BR>'.join(vacana_forms)}"
+        lines.append(puruSha_line)
+      if len(pada_headwords) > 0:
+        table_head = f"{entry_head} {dev(lakara)}"
+        if prayoga == Prayoga.Karmani:
+          table_head = f"{table_head} अकर्तरि<BR><BR>"
+        else:
+          table_head = f"{table_head} {dev(parasmai_mode)}"
+        table_lines.append(table_head)
+        table_lines.append("<BR>--<BR>".join(lines))
+        headwords.extend(pada_headwords)
+    entry = f"<BR><BR>".join(table_lines)
+    entry = entry.replace("लृँत्", "लृँट्")
+    definition = Definition(headwords_tuple=tuple(headwords), meaning=entry)
+    definitions.append(definition)
+  return definitions
+
+
+def dump_sanaadi_dicts(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/kRdanta/vidyut/", sanaadi_dict=sanaadi_dict_kRdanta, make_entry=_get_kRdanta_entry):
+  dhaatu_entries = data.load_dhatu_entries()
 
   for dict_name, sanadi, in sanaadi_dict.items():
-    definitions = []
-    for dhaatu in tqdm(dhatus, desc=f"Dhaatus {dict_name}", position=0, leave=True):
-      dhaatu_str = f"{dhaatu.aupadeshika} ({dhaatu.gana})"
-      if dhaatu.antargana is not None:
-        dhaatu_str = f"{dhaatu_str} ({dhaatu.antargana})"
-      headwords = [dev(dhaatu.aupadeshika)]
-      sanaadyanta = dhaatu.with_sanadi(sanadi)
-      sanaadi_str = ""
-      for p in v.derive(sanaadyanta):
-        sanaadyanta_str = dev(p.text)
-        if sanaadyanta_str not in headwords:
-          headwords.append(sanaadyanta_str)
-      if len(sanadi) > 0 :
-        sanaadi_str = f" + {'+ '.join([x.name for x in sanaadyanta.sanadi])} = {sanaadyanta_str}"
-      entry = dev(f"{dhaatu_str}{sanaadi_str}") + "<BR>"
-      for kRt in Krt.choices():
-        anga = Pratipadika.krdanta(sanaadyanta, kRt)
-        prakriyas = v.derive(anga)
-        for p in prakriyas:
-          headwords.append(dev(p.text))
-          # logging.debug(f"{'|'.join(headwords)}\n{entry}\n")
-          entry += dev(f"+{kRt} = {p.text}") + "<BR>"
-      defintion = Definition(headwords_tuple=tuple(headwords), meaning=entry)
-      definitions.append(defintion)
-    logging.info(f"Got {len(definitions)}.")
-    dest_file_path = os.path.join(dest_dir, dict_name, f"{dict_name}.babylon")
-    headers = header_helper.get_default_headers(dest_file_path)
-    babylon.dump(dest_path=dest_file_path, definitions=definitions, headers=headers)
+    if sanaadi_dict == sanaadi_dict_kRdanta:
+      prayogas = [Prayoga.Kartari]
+    else:
+      prayogas = [Prayoga.Kartari, Prayoga.Karmani]
+    for prayoga in prayogas:
+      if prayoga == Prayoga.Kartari:
+        prayoga_suffix = ""
+      else:
+        prayoga_suffix = "-akartari"
+      dict_name = f"{dict_name}{prayoga_suffix}"
+      definitions = []
+      for dhaatu_entry in tqdm(dhaatu_entries, desc=f"Dhaatus {dict_name}", position=0, leave=True):
+        dhaatu = dhaatu_entry.dhatu
+        headwords_in = OrderedSet()
+        aupadeshika = dev(dhaatu.aupadeshika)
+        headwords_in.extend([aupadeshika, regex.sub("[॒॑]", "", aupadeshika), regex.sub("[॒॑ँ]", "", aupadeshika)])
+        dhaatu_str = f"{dhaatu.aupadeshika} {dhaatu_entry.artha} ({dhaatu.gana})"
+        for p in v.derive(dhaatu):
+          dhaatu_form = dev(p.text)
+          if dev(dhaatu.aupadeshika) != dhaatu_form:
+            dhaatu_str += f" {dhaatu_form}"
+            headwords_in.add(dhaatu_form)
+        if dhaatu.antargana is not None:
+          dhaatu_str = f"{dhaatu_str} ({dhaatu.antargana})"
+        sanaadyanta = dhaatu.with_sanadi(sanadi)
+        sanaadi_str = ""
+        for p in v.derive(sanaadyanta):
+          sanaadyanta_str = dev(p.text)
+          headwords_in.add(sanaadyanta_str)
+        if len(sanadi) > 0 :
+          sanaadi_str = f" + {'+ '.join([x.name for x in sanaadyanta.sanadi])} = {sanaadyanta_str}"
+        entry_head = dev(f"{dhaatu_str}{sanaadi_str}")
+        definitions_d = make_entry(entry_head, headwords_in, sanaadyanta, prayoga)
+        definitions.extend(definitions_d)
+      logging.info(f"Got {len(definitions)}.")
+      dest_file_path = os.path.join(dest_dir, dict_name, f"{dict_name}.babylon")
+      headers = header_helper.get_default_headers(dest_file_path)
+      babylon.dump(dest_path=dest_file_path, definitions=definitions, headers=headers)
 
 
 def dump_subantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/subanta/vidyut/"):
@@ -193,7 +272,8 @@ def print_prakriyA(shabda):
 
 if __name__ == '__main__':
   pass
-  # dump_kRdantas()
+  dump_sanaadi_dicts(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/kRdanta/vidyut/", sanaadi_dict=sanaadi_dict_kRdanta, make_entry=_get_kRdanta_entry)
+  dump_sanaadi_dicts(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/tiNanta/vidyut/", sanaadi_dict=sanaadi_dict_tiNanta, make_entry=_get_tiNanta_entry)
   # dump_subantas()
-  dump_taddhitaantas()
+  # dump_taddhitaantas(overwrite=True)
   # print_prakriyA("वमितवत्")
