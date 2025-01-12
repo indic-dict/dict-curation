@@ -68,7 +68,7 @@ def _get_kRdanta_entry(entry_head, headwords_in, sanaadyanta, *args, **kwargs):
 def _get_tiNanta_entry(entry_head, headwords_in, sanaadyanta, prayoga):
   definitions = []
   for lakara in Lakara.choices():
-    headwords = copy(headwords_in)
+    headwords = []
     table_lines = []
     for parasmai_mode in [DhatuPada.Parasmaipada, DhatuPada.Atmanepada]:
       lines = []
@@ -98,10 +98,12 @@ def _get_tiNanta_entry(entry_head, headwords_in, sanaadyanta, prayoga):
         table_lines.append(table_head)
         table_lines.append("<BR>--<BR>".join(lines))
         headwords.extend(pada_headwords)
-    entry = f"<BR><BR>".join(table_lines)
-    entry = entry.replace("लृँत्", "लृँट्")
-    definition = Definition(headwords_tuple=tuple(headwords), meaning=entry)
-    definitions.append(definition)
+    if len(headwords) > 0:
+      headwords = OrderedSet(list(headwords_in) + headwords)
+      entry = f"<BR><BR>".join(table_lines)
+      entry = entry.replace("लृँत्", "लृँट्")
+      definition = Definition(headwords_tuple=tuple(headwords), meaning=entry)
+      definitions.append(definition)
   return definitions
 
 
@@ -272,7 +274,7 @@ def print_prakriyA(shabda):
 
 if __name__ == '__main__':
   pass
-  dump_sanaadi_dicts(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/kRdanta/vidyut/", sanaadi_dict=sanaadi_dict_kRdanta, make_entry=_get_kRdanta_entry)
+  # dump_sanaadi_dicts(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/kRdanta/vidyut/", sanaadi_dict=sanaadi_dict_kRdanta, make_entry=_get_kRdanta_entry)
   dump_sanaadi_dicts(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/tiNanta/vidyut/", sanaadi_dict=sanaadi_dict_tiNanta, make_entry=_get_tiNanta_entry)
   # dump_subantas()
   # dump_taddhitaantas(overwrite=True)
