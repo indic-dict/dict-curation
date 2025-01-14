@@ -277,7 +277,7 @@ def print_prakriyA(shabda):
   pass
 
 
-def derive_and_print_prakriyA():
+def derive_and_print_tinanta():
   pada = Pada.Tinanta(
     dhatu=Dhatu.mula(aupadeshika="BU", gana=Gana.Bhvadi),
     prayoga=Prayoga.Kartari,
@@ -288,6 +288,11 @@ def derive_and_print_prakriyA():
   print_prakriyA(pada)
 
 
+def derive_and_print_kRdanta():
+  spastaya = Dhatu.nama(Pratipadika.basic(slp("स्पष्ट")), nama_sanadi=Sanadi.Ric)
+  kRdanta = Pratipadika.krdanta(spastaya, krt=Krt.kta)
+  print_prakriyA(kRdanta)
+
 
 if __name__ == '__main__':
   pass
@@ -295,4 +300,5 @@ if __name__ == '__main__':
   # dump_sanaadi_dicts(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/tiNanta/vidyut/", sanaadi_dict=sanaadi_dict_tiNanta, make_entry=_get_tiNanta_entry)
   # dump_subantas()
   # dump_taddhitaantas(overwrite=True)
-  print_prakriyA("वमितवत्")
+  # print_prakriyA("वमितवत्")
+  derive_and_print_kRdanta()
