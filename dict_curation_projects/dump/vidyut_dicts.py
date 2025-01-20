@@ -1,13 +1,13 @@
 import logging
 import os
 from copy import copy
+from indic_transliteration.vidyut_helper import dev, slp
 
 import regex
 from click.utils import make_default_short_help
 from sanskrit_data.collection_helper import OrderedSet
 from tqdm import tqdm
 from vidyut.kosha import Kosha, PratipadikaEntry
-from vidyut.lipi import transliterate, Scheme
 from vidyut.prakriya import Data, Vyakarana, Sanadi, Krt, Pratipadika, Vibhakti, Vacana, Linga, Pada, Taddhita, \
   DhatuPada, Lakara, Purusha, Prayoga, Gana, Dhatu
 
@@ -41,14 +41,6 @@ sanaadi_dict_tiNanta ={
   'vidyut-san-Nic-tiN': (Sanadi.san, Sanadi.Ric),
   'vidyut-Nic-san-tiN': (Sanadi.Ric, Sanadi.san)
 }
-
-
-def dev(x):
-  return transliterate(str(x), Scheme.Slp1, Scheme.Devanagari)
-
-
-def slp(x):
-  return transliterate(str(x), Scheme.Devanagari, Scheme.Slp1)
 
 
 
@@ -255,50 +247,11 @@ def dump_taddhitaantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict
     babylon.dump(dest_path=dest_file_path, definitions=definitions, headers=headers)
 
 
-def print_prakriyA(shabda):
-  if isinstance(shabda, str):
-    entries = kosha.get(slp(shabda))
-  else:
-    entries = [shabda]
-  if len(entries) == 0:
-    logging.error(f"Can't get entry for {shabda}.")
-    return
-  for entry in entries:
-    prakriyas = v.derive(entry)
-    for p in prakriyas:
-      steps = []
-      for step in p.history:
-        sutra = dev(code_to_sutra.get((step.source, step.code), "(??)"))
-        url = f"[A](https://ashtadhyayi.github.io/suutra/{step.code[:3]}/{step.code})"
-        detail = f"{dev(step.source)} {step.code} → {dev(','.join(step.result))} {sutra} {url}"
-        steps.append(detail)
-      md_newline = '  \n'
-      logging.info(f"## {dev(p.text)}\n{md_newline.join(steps)}\n")
-  pass
-
-
-def derive_and_print_tinanta():
-  pada = Pada.Tinanta(
-    dhatu=Dhatu.mula(aupadeshika="BU", gana=Gana.Bhvadi),
-    prayoga=Prayoga.Kartari,
-    lakara=Lakara.Lat,
-    purusha=Purusha.Prathama,
-    vacana=Vacana.Eka,
-  )
-  print_prakriyA(pada)
-
-
-def derive_and_print_kRdanta():
-  spastaya = Dhatu.nama(Pratipadika.basic(slp("स्पष्ट")), nama_sanadi=Sanadi.Ric)
-  kRdanta = Pratipadika.krdanta(spastaya, krt=Krt.kta)
-  print_prakriyA(kRdanta)
-
-
 if __name__ == '__main__':
   pass
   # dump_sanaadi_dicts(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/kRdanta/vidyut/", sanaadi_dict=sanaadi_dict_kRdanta, make_entry=_get_kRdanta_entry)
   # dump_sanaadi_dicts(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/tiNanta/vidyut/", sanaadi_dict=sanaadi_dict_tiNanta, make_entry=_get_tiNanta_entry)
   # dump_subantas()
   # dump_taddhitaantas(overwrite=True)
-  # print_prakriyA("वमितवत्")
-  derive_and_print_kRdanta()
+  # print_prakriyA("उच्चैश्रवाः")
+  # derive_and_print_kRdanta()
