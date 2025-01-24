@@ -16,9 +16,15 @@ from dict_curation import babylon
 from dict_curation.babylon import header_helper
 
 v = Vyakarana()
-data = Data("/home/vvasuki/gitland/ambuda-org/vidyut-latest/prakriya")
-code_to_sutra = {(s.source, s.code): s.text for s in data.load_sutras()}
-kosha = Kosha("/home/vvasuki/gitland/ambuda-org/vidyut-latest/kosha")
+PRAKRIYA_DHATU = "/home/vvasuki/gitland/vishvAsa/sanskrit/content/vyAkaraNam/pANinIyam/dhAtu-prakriyA/prakriyAH"
+DATA_PATH = "/home/vvasuki/gitland/ambuda-org/vidyut/vidyut-data/data/build/vidyut-latest/"
+
+v = Vyakarana()
+# data = Data("/home/vvasuki/gitland/ambuda-org/vidyut-latest/prakriya")
+prakriya_data = Data(os.path.join(DATA_PATH, "prakriya/data"))
+code_to_sutra = {(s.source, s.code): s.text for s in prakriya_data.load_sutras()}
+# kosha = Kosha("/home/vvasuki/gitland/ambuda-org/vidyut/vidyut-data/data/build/vidyut-latest/kosha")
+kosha = Kosha(os.path.join(DATA_PATH, "kosha"))
 
 
 sanaadi_dict_kRdanta ={
@@ -170,6 +176,8 @@ def dump_subantas(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sans
         headwords = OrderedSet()
         headwords.add(praatipadika_str)
         lines = []
+        if linga == Linga.Stri and praatipadika_str[-1] in ["ी", "ा"]:
+          continue
         for vibhakti in Vibhakti.choices():
           vachana_entries = []
           for vacana in Vacana.choices():
@@ -251,7 +259,7 @@ if __name__ == '__main__':
   pass
   # dump_sanaadi_dicts(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/kRdanta/vidyut/", sanaadi_dict=sanaadi_dict_kRdanta, make_entry=_get_kRdanta_entry)
   # dump_sanaadi_dicts(dest_dir="/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/tiNanta/vidyut/", sanaadi_dict=sanaadi_dict_tiNanta, make_entry=_get_tiNanta_entry)
-  # dump_subantas()
+  dump_subantas()
   # dump_taddhitaantas(overwrite=True)
   # print_prakriyA("उच्चैश्रवाः")
   # derive_and_print_kRdanta()
