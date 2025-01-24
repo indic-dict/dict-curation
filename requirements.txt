@@ -3,6 +3,4 @@ curation_utils
 doc_curation
 tqdm
 PyICU
-vidyut-prakriya
-vidyut-lipi
-
+vidyut
