@@ -9,9 +9,10 @@ import regex
 import tqdm
 from aksharamukha import GeneralMap
 from indic_transliteration import sanscript, aksharamukha_helper, detect
+from requests.utils import default_headers
 
 import dict_curation.babylon
-from dict_curation.babylon import lipi, definitions_helper
+from dict_curation.babylon import lipi, definitions_helper, header_helper, language
 
 GeneralMap.DEVANAGARI = "Devanagari"
 GeneralMap.BENGALI = "Bengali"
@@ -106,6 +107,11 @@ def process_dir(source_script, dest_script, source_dir, dest_dir=None, pre_optio
             dict_curation.babylon.transform(file_path=dest_path, transformer=lipi.transliterate_tamil, dry_run=False, dest_script=dest_script)
           else:
             aksharamukha_helper.convert_file(source_path=source_dict_path, dest_path=dest_path, source_script=source_script, dest_script=dest_script, pre_options=pre_options, post_options=post_options)
+          headers = header_helper.get_headers(dest_path)
+          language_pair = language.get_language_pair_string(file_path=dest_path)
+          default_headers = header_helper.get_default_headers(dest_path)
+          headers["bookname"] = f"{default_headers['bookname']} {language_pair}"
+          header_helper.set_headers(dest_path, headers)
         else:
           logging.info("Skipping %s as it exists", dest_path)
       else:
