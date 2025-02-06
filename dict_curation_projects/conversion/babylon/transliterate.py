@@ -47,17 +47,17 @@ def process_telugu_dicts():
 
 def process_tamil_dicts(overwrite):
   pre_options = ["TamilTranscribe"]
-  source_dir = "/home/vvasuki/gitland/indic-dict/dicts/stardict-tamiL/ta-head/en-entries"
-  lipi.process_dir(source_script="Tamil", dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir, pre_options=pre_options, overwrite=overwrite)
+  source_dir = "/home/vvasuki/gitland/indic-dict/dicts/stardict-tamil/ta-head/en-entries"
+  # lipi.process_dir(source_script="Tamil", dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir, pre_options=pre_options, overwrite=overwrite)
   # # 
-  source_dir = "/home/vvasuki/gitland/indic-dict/dicts/stardict-tamiL/ta-head/ta-entries"
+  source_dir = "/home/vvasuki/gitland/indic-dict/dicts/stardict-tamil/ta-head/ta-entries"
   lipi.process_dir(source_script="Tamil", dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir, pre_options=pre_options, overwrite=overwrite)
 
-  source_dir = "/home/vvasuki/gitland/indic-dict/dicts/stardict-tamiL/en-head/"
-  lipi.process_dir(source_script="Tamil", dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir, pre_options=pre_options, overwrite=overwrite)
-
-  source_dir = "/home/vvasuki/gitland/indic-dict/dicts/stardict-tamiL/en-head/"
-  lipi.process_dir(source_script="Tamil", dest_script="ISO", source_dir=source_dir, pre_options=pre_options, overwrite=overwrite)
+  source_dir = "/home/vvasuki/gitland/indic-dict/dicts/stardict-tamil/en-head/"
+  # lipi.process_dir(source_script="Tamil", dest_script=GeneralMap.DEVANAGARI, source_dir=source_dir, pre_options=pre_options, overwrite=overwrite)
+  # 
+  # source_dir = "/home/vvasuki/gitland/indic-dict/dicts/stardict-tamil/en-head/"
+  # lipi.process_dir(source_script="Tamil", dest_script="ISO", source_dir=source_dir, pre_options=pre_options, overwrite=overwrite)
  
 
 
