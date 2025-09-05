@@ -7,4 +7,4 @@ if __name__ == '__main__':
   # cleaner.set_languages(file_path="/home/vvasuki/indic-dict/stardict_all/stardict-malayalam/en-head/olam-enml/olam-enml.babylon")
   # dict_curation.babylon.process_all(dir_path="/home/vvasuki/indic-dict/stardict_all/stardict-urdu", transformer=language.set_languages)
   # dict_curation.babylon.process_all(dir_path="/home/vvasuki/indic-dict/stardict_all/stardict-gujarati", transformer=language.set_languages)
-  definitions_helper.get_definitions_map(in_path="/home/vvasuki/gitland/indic-dict_stardict/stardict-ayurveda/WHO_NIA_non-clinical_draft/WHO_NIA_non-clinical_draft.babylon")
+  definitions_helper.get_definitions_map(in_path="/home/vvasuki/gitland/indic-dict/dicts/stardict-tamil/ta-head/ta-entries/divya-p_pArthasArathi/divya-p_pArthasArathi.babylon")
