@@ -167,3 +167,14 @@ def test_clean_loci_and_generate_prakrti_definitions():
   assert iva_hws["अग्नि"][0].startswith("अ᳓ग्नि (11)")
   assert "2.25.4" in iva_hws["अग्नि"][0]
   assert iva_hws["रथ"][0].startswith("र᳓थ (2)")
+
+
+def test_sb_spec_and_four_part_loci():
+  sb_spec = next(s for s in prakrti_svara.VEDA_SPECS if s.key == "sb")
+  assert sb_spec.dest_name == "syv-sb-m-prakRti-svara"
+  assert sb_spec.source_name == "syv-sb-m-pada-svara"
+  assert sb_spec.already_us is True
+
+  sb_raw = [("अग्निः᳓", 12, ("1.3.3.19", "1.3.4.4"))]
+  sb_defs, _, _ = prakrti_svara.generate_prakrti_definitions(sb_raw, already_us=True)
+  assert any("अग्नि" in d.headwords_tuple and d.meaning.startswith("अग्नि᳓ (12)<br>1.3.3.19, 1.3.4.4") for d in sb_defs)

@@ -2,7 +2,7 @@
 
 Derives US-accented (``᳓`` / ``᳙``) nominal prātipadika stems, avyayas,
 and dhātu (verbal) finite-form synopses from existing Vedic padapāṭha
-svara dictionaries (TS, RV, AV, VS Mādhyandina), writing ``.babylon``
+svara dictionaries (TS, RV, AV, VS Mādhyandina, ŚB Mādhyandina), writing ``.babylon``
 and ``README.md`` outputs into all mirrored kAvya directories.
 """
 
@@ -87,6 +87,13 @@ VEDA_SPECS: tuple[VedaDictSpec, ...] = (
         source_name="syv-ms-padasvara",
         already_us=True,
         description="Śukla Yajurveda Vājasaneyi Mādhyandina Saṁhitā prakṛti-svara (stems & dhātus, US notation)",
+    ),
+    VedaDictSpec(
+        key="sb",
+        dest_name="syv-sb-m-prakRti-svara",
+        source_name="syv-sb-m-pada-svara",
+        already_us=True,
+        description="Śukla Yajurveda Mādhyandina Śatapatha Brāhmaṇa prakṛti-svara (stems & dhātus, US notation)",
     ),
 )
 
