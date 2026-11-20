@@ -179,7 +179,7 @@ def dump_all(dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS) -> None:
           counts,
           loci,
           dest_dir=dest_dir,
-          write_final=True,
+          write_final=False,
           citation_sep=", ",
           extra_headwords=extra_headwords,
       )

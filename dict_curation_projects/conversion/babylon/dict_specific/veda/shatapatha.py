@@ -127,7 +127,7 @@ def collect_sb_padasvara(source_dir: str = SOURCE_DIR) -> tuple[Counter[str], di
 
 
 def dump_all(dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS, source_dir: str = SOURCE_DIR) -> tuple[Counter[str], int]:
-  """Write ``syv-sb-m-pada-svara`` ``.babylon``, ``.babylon_final``, and ``README.md`` to all mirrors."""
+  """Write ``syv-sb-m-pada-svara`` ``.babylon`` and ``README.md`` to all mirrors."""
   counts, loci, skipped = collect_sb_padasvara(source_dir=source_dir)
   extra_headwords = build_compound_extra_headwords(counts.keys(), taittiriya._join_compound_sandhi)
   readme_text = (
@@ -142,7 +142,7 @@ def dump_all(dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS, source_dir: str = S
           counts,
           loci,
           dest_dir=dest_dir,
-          write_final=True,
+          write_final=False,
           citation_sep=", ",
           extra_headwords=extra_headwords,
       )

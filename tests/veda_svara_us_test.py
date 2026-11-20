@@ -64,12 +64,11 @@ def test_shatapatha_collect_and_dump_skips_corrections(tmp_path: Path):
   dest = tmp_path / "syv-sb-m-pada-svara"
   shatapatha.dump_all(dest_dirs=(str(dest),), source_dir=str(src))
   bab = (dest / "syv-sb-m-pada-svara.babylon").read_text(encoding="utf-8")
-  bab_final = (dest / "syv-sb-m-pada-svara.babylon_final").read_text(encoding="utf-8")
+  assert not (dest / "syv-sb-m-pada-svara.babylon_final").exists()
   assert (dest / "README.md").is_file()
   assert "वृ᳓ते" in bab and "अ᳓श्वस्य" in bab
   assert "वै᳓" not in bab and "मेध्यँ᳙" not in bab
   assert "\u0951" not in bab and "\u0952" not in bab and "\u1cd6" not in bab
-  assert "\u0951" not in bab_final and "\u0952" not in bab_final and "\u1cd6" not in bab_final
 
 
 def test_shatapatha_rejects_classical_accents_in_uncorrected_pada(tmp_path: Path):

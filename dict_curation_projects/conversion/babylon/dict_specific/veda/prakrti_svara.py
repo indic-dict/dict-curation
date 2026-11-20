@@ -2,8 +2,8 @@
 
 Derives US-accented (``᳓`` / ``᳙``) nominal prātipadika stems, avyayas,
 and dhātu (verbal) finite-form synopses from existing Vedic padapāṭha
-svara dictionaries (TS, RV, AV, VS Mādhyandina), writing both ``.babylon``
-and ``.babylon_final`` outputs into all mirrored kAvya directories.
+svara dictionaries (TS, RV, AV, VS Mādhyandina), writing ``.babylon``
+and ``README.md`` outputs into all mirrored kAvya directories.
 """
 
 from __future__ import annotations
@@ -1403,8 +1403,9 @@ def build_single_prakrti_svara(
     primary_root: str = PRIMARY_KAVYA_ROOT,
     mirror_roots: Sequence[str] = DEFAULT_MIRROR_ROOTS,
     vedaweb_prior: dict[str, VedawebEntry] | None = None,
+    write_final: bool = False,
 ) -> dict[str, int]:
-  """Build one prakṛti-svara dictionary (``.babylon``, ``.babylon_final``, ``README.md``) across mirror dirs."""
+  """Build one prakṛti-svara dictionary (``.babylon`` and ``README.md``) across mirror dirs."""
   src_bab = os.path.join(primary_root, spec.source_name, f"{spec.source_name}.babylon")
   raw_entries = load_padasvara_entries(src_bab)
   defs_dev, defs_final, stats = generate_prakrti_definitions(
@@ -1430,11 +1431,12 @@ def build_single_prakrti_svara(
     dest_dir = os.path.join(root, spec.dest_name)
     os.makedirs(dest_dir, exist_ok=True)
     bab_path = os.path.join(dest_dir, f"{spec.dest_name}.babylon")
-    final_path = os.path.join(dest_dir, f"{spec.dest_name}.babylon_final")
     babylon.dump(dest_path=bab_path, definitions=defs_dev, headers=dict(headers))
-    babylon.dump(dest_path=final_path, definitions=defs_final, headers=dict(headers))
+    if write_final:
+      final_path = os.path.join(dest_dir, f"{spec.dest_name}.babylon_final")
+      babylon.dump(dest_path=final_path, definitions=defs_final, headers=dict(headers))
     Path(os.path.join(dest_dir, "README.md")).write_text(readme_text, encoding="utf-8")
-    logging.info("Wrote %s & .babylon_final (%d entries) in %s", spec.dest_name, len(defs_dev), dest_dir)
+    logging.info("Wrote %s (%d entries) in %s", spec.dest_name, len(defs_dev), dest_dir)
 
   return stats
 

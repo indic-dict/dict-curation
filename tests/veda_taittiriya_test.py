@@ -63,11 +63,12 @@ def test_taittiriya_plain_pluta_and_headword_dump(tmp_path):
       counts,
       loci,
       str(dest),
-      write_final=True,
+      write_final=False,
       extra_headwords={"अँहःमुचे": {"अँहोमुचे"}},
   )
   with open(bab_path, encoding="utf-8") as f:
     text = f.read()
   assert "अँहःमुचे|अंहःमुचे|अँहोमुचे|अंहोमुचे" in text
   assert "अँहः-मु᳓चे (11)<br>1.6.12" in text
-  assert final_path is not None
+  assert final_path is None
+  assert not (dest / "kyv-ts-padasvara.babylon_final").exists()
