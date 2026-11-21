@@ -1,4 +1,4 @@
-"""Build ``syv-sb-m-pada-svara`` Babylon lexicon from Śatapatha Brāhmaṇa (Mādhyandina) padapāṭha.
+"""Build ``syv-sb-m-pada-svara`` and ``syv-sb-k-pada-svara`` Babylon lexicons from Śatapatha Brāhmaṇa padapāṭha.
 
 Extracts US-accented padas from ``<details><summary>पद-पाठः (यान्त्रिकः)</summary>`` blocks in
 ``sarva-prastutiH``, keeping only padas with no suggested correction (excluding ``→`` lines).
@@ -6,6 +6,7 @@ Extracts US-accented padas from ``<details><summary>पद-पाठः (या�
 
 from __future__ import annotations
 
+import argparse
 from collections import Counter, defaultdict
 import logging
 import os
@@ -30,6 +31,15 @@ DEFAULT_DEST_DIRS = (
     "/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-kAvya/syv-sb-m-pada-svara",
     "/home/vvasuki/gitland/indic-dict/stardict/stardict-sanskrit-kAvya/syv-sb-m-pada-svara",
 )
+KANVA_SOURCE_DIR = (
+    "/home/vvasuki/gitland/vishvAsa/vedAH_yajuH/content/vAjasaneyam/"
+    "kANvam/shatapatha-brAhmaNam/sarva-prastutiH"
+)
+KANVA_DEFAULT_DEST_DIRS = (
+    "/home/vvasuki/gitland/sanskrit/raw_etexts/koshaH/indic-dict/kAvya/syv-sb-k-pada-svara",
+    "/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-kAvya/syv-sb-k-pada-svara",
+    "/home/vvasuki/gitland/indic-dict/stardict/stardict-sanskrit-kAvya/syv-sb-k-pada-svara",
+)
 
 _SECTION_SPLIT_RE = re.compile(r"(?m)^##\s+([^\n]+)\n")
 _PP_BLOCK_RE = re.compile(r"<details[^>]*>\s*<summary>\s*पद-पाठः[^<]*</summary>(.*?)</details>", re.S)
@@ -46,12 +56,14 @@ def _locus_prefix_for_file(rel_path: Path) -> tuple[int, int, int] | None:
   if rel_path.name.startswith("_") or rel_path.name == "file_list.md":
     return None
   parts = rel_path.parts
-  if len(parts) < 3 or not parts[0].isdigit() or not rel_path.parent.name.isdigit():
+  if len(parts) < 3:
     return None
+  k_stem = parts[0].split("_")[0]
+  a_stem = rel_path.parent.name.split("_")[0]
   b_stem = rel_path.stem.split("_")[0]
-  if not b_stem.isdigit():
+  if not (k_stem.isdigit() and a_stem.isdigit() and b_stem.isdigit()):
     return None
-  return int(parts[0]), int(rel_path.parent.name), int(b_stem)
+  return int(k_stem), int(a_stem), int(b_stem)
 
 
 def _clean_sb_bullet_pada(bullet_line: str) -> str | None:
@@ -126,13 +138,19 @@ def collect_sb_padasvara(source_dir: str = SOURCE_DIR) -> tuple[Counter[str], di
   return counts, loci, skipped_corrections
 
 
-def dump_all(dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS, source_dir: str = SOURCE_DIR) -> tuple[Counter[str], int]:
-  """Write ``syv-sb-m-pada-svara`` ``.babylon`` and ``README.md`` to all mirrors."""
+def dump_all(
+    dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS,
+    source_dir: str = SOURCE_DIR,
+    *,
+    dict_name: str = "syv-sb-m-pada-svara",
+    recension_label: str = "Mādhyandina",
+) -> tuple[Counter[str], int]:
+  """Write ``syv-sb-{m,k}-pada-svara`` ``.babylon`` and ``README.md`` to all mirrors."""
   counts, loci, skipped = collect_sb_padasvara(source_dir=source_dir)
   extra_headwords = build_compound_extra_headwords(counts.keys(), taittiriya._join_compound_sandhi)
   readme_text = (
-      "## syv-sb-m-pada-svara\n"
-      "- Śukla Yajurveda Mādhyandina Śatapatha Brāhmaṇa padapāṭha (US notation).\n"
+      f"## {dict_name}\n"
+      f"- Śukla Yajurveda {recension_label} Śatapatha Brāhmaṇa padapāṭha (US notation).\n"
       "- Built by `dict_curation_projects.conversion.babylon.dict_specific.veda.shatapatha` "
       "from `पद-पाठः (यान्त्रिकः)` excluding entries with suggested corrections (`→`).\n"
   )
@@ -150,6 +168,25 @@ def dump_all(dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS, source_dir: str = S
   return counts, skipped
 
 
+def dump_kanva(
+    dest_dirs: tuple[str, ...] = KANVA_DEFAULT_DEST_DIRS,
+    source_dir: str = KANVA_SOURCE_DIR,
+) -> tuple[Counter[str], int]:
+  """Write ``syv-sb-k-pada-svara`` ``.babylon`` and ``README.md`` to all mirrors."""
+  return dump_all(
+      dest_dirs=dest_dirs,
+      source_dir=source_dir,
+      dict_name="syv-sb-k-pada-svara",
+      recension_label="Kāṇva",
+  )
+
+
 if __name__ == "__main__":
   logging.basicConfig(level=logging.INFO)
-  dump_all()
+  ap = argparse.ArgumentParser(description="Build Śatapatha Brāhmaṇa padasvara Babylon lexicons.")
+  ap.add_argument("--recension", choices=("madhyandina", "kanva", "all"), default="madhyandina")
+  cli_args = ap.parse_args()
+  if cli_args.recension in ("madhyandina", "all"):
+    dump_all()
+  if cli_args.recension in ("kanva", "all"):
+    dump_kanva()

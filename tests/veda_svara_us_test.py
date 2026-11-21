@@ -71,6 +71,37 @@ def test_shatapatha_collect_and_dump_skips_corrections(tmp_path: Path):
   assert "\u0951" not in bab and "\u0952" not in bab and "\u1cd6" not in bab
 
 
+def test_shatapatha_kanva_named_kanda_dirs_and_dump_kanva(tmp_path: Path):
+  src = tmp_path / "sarva-prastutiH"
+  b_k1 = src / "01_ekapAtkANDam" / "01" / "1.md"
+  b_k1.parent.mkdir(parents=True)
+  b_k1.write_text(
+      "## ०२\n"
+      "<details><summary>पद-पाठः (यान्त्रिकः)</summary>\n\n"
+      "- अ᳓थ\n"
+      "- ह\n"
+      "</details>\n",
+      encoding="utf-8",
+  )
+  b_k17 = src / "17_bRhadAraNyakam" / "04" / "2.md"
+  b_k17.parent.mkdir(parents=True)
+  b_k17.write_text(
+      "## ०१\n"
+      "<details><summary>पद-पाठः (यान्त्रिकः)</summary>\n\n"
+      "- ब्र᳓ह्म\n"
+      "</details>\n",
+      encoding="utf-8",
+  )
+  dest = tmp_path / "syv-sb-k-pada-svara"
+  counts, skipped = shatapatha.dump_kanva(dest_dirs=(str(dest),), source_dir=str(src))
+  assert skipped == 0
+  assert counts == {"अ᳓थ": 1, "ह": 1, "ब्र᳓ह्म": 1}
+  bab = (dest / "syv-sb-k-pada-svara.babylon").read_text(encoding="utf-8")
+  assert "1.1.1.2" in bab and "17.4.2.1" in bab
+  readme = (dest / "README.md").read_text(encoding="utf-8")
+  assert "syv-sb-k-pada-svara" in readme and "Kāṇva" in readme
+
+
 def test_shatapatha_rejects_classical_accents_in_uncorrected_pada(tmp_path: Path):
   src = tmp_path / "sarva-prastutiH" / "01" / "01" / "01.md"
   src.parent.mkdir(parents=True)
