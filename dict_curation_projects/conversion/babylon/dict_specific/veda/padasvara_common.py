@@ -6,6 +6,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 import logging
 import os
+from pathlib import Path
 import re
 from typing import Callable, Iterable, Sequence
 
@@ -662,3 +663,87 @@ def dump_padasvara_babylon(
     logging.info("Wrote %d definitions to %s", len(defs_final), final_path)
 
   return bab_path, final_path
+
+
+VEDA_SVARA_DICT_NAMES: tuple[str, ...] = (
+    "av-padasvara",
+    "av-prakRti-svara",
+    "kyv-ks-pada-svara",
+    "kyv-ks-prakRti-svara",
+    "kyv-ms-pada-svara",
+    "kyv-ms-prakRti-svara",
+    "kyv-tb-pada-svara",
+    "kyv-tb-prakRti-svara",
+    "kyv-tk-pada-svara",
+    "kyv-tk-prakRti-svara",
+    "kyv-ts-padasvara",
+    "kyv-ts-prakRti-svara",
+    "rv-padasvara-dev",
+    "rv-prakRti-svara-dev",
+    "syv-sb-k-pada-svara",
+    "syv-sb-m-pada-svara",
+    "syv-sb-m-prakRti-svara",
+    "syv-vs-k-padasvara",
+    "syv-vs-k-prakRti-svara",
+    "syv-vs-m-padasvara",
+    "syv-vs-m-prakRti-svara",
+)
+
+_CITE_END_RE = re.compile(r"\([^()]{2,}\)\s*$")
+_LOCUS_TOKEN_RE = r"(?:/?[0-9०-९]+(?:[./\-][A-Za-z0-9०-९_\-]+)*|…\s*\(\+[0-9]+\))"
+_LOCI_ONLY_RE = re.compile(rf"^{_LOCUS_TOKEN_RE}(?:\s*,\s*{_LOCUS_TOKEN_RE})*$")
+
+
+def validate_veda_babylon_text(text: str) -> dict[str, int]:
+  """Validate Babylon schema and citation invariants on a Vedic svara ``.babylon`` string.
+
+  Returns counts for ``entries``, ``with_meaning``, ``bad_format``, and ``uncited``.
+  """
+  stats = {"entries": 0, "with_meaning": 0, "bad_format": 0, "uncited": 0}
+  blocks = [b for b in text.strip().split("\n\n") if b.strip()]
+  for blk in blocks:
+    lines = blk.splitlines()
+    if lines[0].startswith("#"):
+      continue
+    stats["entries"] += 1
+    if len(lines) != 2 or not lines[0].strip() or not lines[1].strip():
+      stats["bad_format"] += 1
+      continue
+    parts = [p.strip() for p in lines[1].split("<br>")]
+    is_dhatu = "[धातुः]" in parts[0]
+    meaning_str: str | None = None
+    if is_dhatu:
+      if len(parts) not in (3, 4):
+        stats["bad_format"] += 1
+        continue
+      if len(parts) == 4:
+        meaning_str = parts[1]
+    else:
+      if len(parts) not in (2, 3):
+        stats["bad_format"] += 1
+        continue
+      if len(parts) == 3:
+        meaning_str = parts[1]
+      elif not _LOCI_ONLY_RE.match(parts[1]):
+        meaning_str = parts[1]
+
+    if meaning_str is not None:
+      if not meaning_str:
+        stats["bad_format"] += 1
+        continue
+      stats["with_meaning"] += 1
+      segs = [s.strip() for s in meaning_str.split(" · ") if s.strip()]
+      if not segs or not all(_CITE_END_RE.search(s) for s in segs):
+        stats["uncited"] += 1
+  return stats
+
+
+def validate_veda_babylon_dir(dict_dir: str | os.PathLike[str]) -> dict[str, int]:
+  """Validate a Vedic svara dictionary directory (single ``.babylon``, zero ``.babylon_final``)."""
+  dpath = Path(dict_dir)
+  bab_path = dpath / f"{dpath.name}.babylon"
+  if not bab_path.is_file():
+    raise FileNotFoundError(f"Missing Babylon file: {bab_path}")
+  stats = validate_veda_babylon_text(bab_path.read_text(encoding="utf-8"))
+  stats["final_files"] = len(list(dpath.glob("*.babylon_final")))
+  return stats

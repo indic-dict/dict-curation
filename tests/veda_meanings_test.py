@@ -283,3 +283,52 @@ def test_format_brief_meaning_preserves_citations_under_length_cap():
   assert "(सायणः 1.2.3)" in out
   assert "(Griffith 1.2.3)" in out
   assert len(out) <= 80
+
+
+def test_validate_veda_babylon_schema_and_citations(tmp_path):
+  import pytest
+
+  d = tmp_path / "kyv-test-pada-svara"
+  d.mkdir()
+  (d / "kyv-test-pada-svara.babylon").write_text(
+      "\n".join([
+          "#bookname=kyv-test-pada-svara (sa-sa)",
+          "",
+          "अग्निः",
+          "अग्नि᳓ः (3)<br>पावकः (सायणः 1.1.1) · fire (Gemini 3.8 1.1.1)<br>1.1.1, 1.1.2",
+          "",
+          "इति",
+          "इ᳓ति (2)<br>1.1.1",
+          "",
+          "दा",
+          "दा [धातुः]<br>give (Griffith 1.2.3)<br>द᳓दाति (4)<br>1.2.3",
+          "",
+      ]),
+      encoding="utf-8",
+  )
+  stats = padasvara_common.validate_veda_babylon_dir(d)
+  assert stats == {"entries": 3, "with_meaning": 2, "bad_format": 0, "uncited": 0, "final_files": 0}
+
+  # Uncited segment fails citation check, extra <br> fails schema, leftover .babylon_final is counted.
+  (d / "kyv-test-pada-svara.babylon_final").write_text("stale", encoding="utf-8")
+  bad = padasvara_common.validate_veda_babylon_text(
+      "अग्निः\nअग्नि᳓ः (1)<br>fire<br>1.1\n\nसोमः\nसोमः (1)<br>a<br>b<br>c\n"
+  )
+  assert bad["uncited"] == 1
+  assert bad["bad_format"] == 1
+  assert padasvara_common.validate_veda_babylon_dir(d)["final_files"] == 1
+
+  # Live regression check against local stardict-sanskrit-kAvya clone when present.
+  repo = tmp_path.parent / "__nonexistent__"
+  del repo
+  from pathlib import Path
+  live_root = Path("/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-kAvya")
+  if not live_root.is_dir():
+    pytest.skip("Local stardict-sanskrit-kAvya clone not present")
+  for name in padasvara_common.VEDA_SVARA_DICT_NAMES:
+    res = padasvara_common.validate_veda_babylon_dir(live_root / name)
+    assert res["entries"] > 0, name
+    assert res["with_meaning"] > 0, name
+    assert res["bad_format"] == 0, f"{name}: {res}"
+    assert res["uncited"] == 0, f"{name}: {res}"
+    assert res["final_files"] == 0, f"{name}: {res}"
