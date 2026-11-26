@@ -140,10 +140,21 @@ def dump_all(
     *,
     dict_name: str = "syv-sb-m-pada-svara",
     recension_label: str = "Mādhyandina",
+    include_meanings: bool = True,
 ) -> tuple[Counter[str], int]:
   """Write ``syv-sb-{m,k}-pada-svara`` ``.babylon`` and ``README.md`` to all mirrors."""
+  from . import vedic_meanings
+
   counts, loci, skipped = collect_sb_padasvara(source_dir=source_dir)
   extra_headwords = build_compound_extra_headwords(counts.keys(), taittiriya._join_compound_sandhi)
+  corpus_key = "sb-k" if ("-k" in dict_name.lower() or "kāṇva" in recension_label.lower()) else "sb-m"
+  meanings = (
+      vedic_meanings.build_meaning_lookup_map(
+          corpus_key, counts, already_us=True, source_dir=source_dir, use_cache=True
+      )
+      if include_meanings
+      else None
+  )
   readme_text = (
       f"## {dict_name}\n"
       f"- Śukla Yajurveda {recension_label} Śatapatha Brāhmaṇa padapāṭha (US notation).\n"
@@ -159,6 +170,7 @@ def dump_all(
           write_final=False,
           citation_sep=", ",
           extra_headwords=extra_headwords,
+          meanings=meanings,
       )
       Path(os.path.join(dest_dir, "README.md")).write_text(readme_text, encoding="utf-8")
   return counts, skipped

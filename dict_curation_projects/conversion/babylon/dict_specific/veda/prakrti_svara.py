@@ -414,6 +414,16 @@ def _clean_loci(tail: str) -> tuple[str, ...]:
   return tuple(seen.keys())
 
 
+def _looks_like_loci_part(part: str) -> bool:
+  """Heuristic distinguishing a citation list from a brief gloss line in 2-part blocks."""
+  s = part.strip()
+  if not s:
+    return False
+  if re.match(r"^(?:/\S+|\d+(?:[./:-]\d+)+)", s):
+    return True
+  return bool(re.fullmatch(r"[0-9०-९/.,\s()…+a-zA-Z_-]+", s)) and any(ch.isdigit() for ch in s)
+
+
 def load_padasvara_entries(babylon_path: str | Path) -> list[tuple[str, int, tuple[str, ...]]]:
   """Read ``(sasvara_form, freq, loci)`` entries from an existing padasvara Babylon file."""
   text = Path(babylon_path).read_text(encoding="utf-8")
@@ -423,11 +433,14 @@ def load_padasvara_entries(babylon_path: str | Path) -> list[tuple[str, int, tup
     if len(lines) < 2 or lines[0].startswith("#"):
       continue
     body = "<br>".join(lines[1:])
-    if "<br>" in body:
-      head_part, loci_part = body.split("<br>", 1)
+    parts = body.split("<br>")
+    head_part = parts[0].strip()
+    if len(parts) >= 3:
+      loci_part = parts[-1]
+    elif len(parts) == 2:
+      loci_part = parts[1] if _looks_like_loci_part(parts[1]) else ""
     else:
-      head_part, loci_part = body, ""
-    head_part = head_part.strip()
+      loci_part = ""
     m = re.match(r"^(.+?)\s*\((\d+)\)\s*$", head_part)
     if not m:
       continue
@@ -1246,6 +1259,55 @@ def _strip_enclitic_iva(npada: NormalizedPada) -> NormalizedPada:
   )
 
 
+def _resolve_stem_brief(
+    sas_stem: str,
+    tag: str,
+    *,
+    stem_meanings: dict[str, str] | None = None,
+    corpus_meanings=None,
+) -> str:
+  """Resolve a brief single-line meaning for a nominal or avyaya stem entry."""
+  bare = _strip_all_accents(sas_stem).replace("ँ", "ं")
+  bare_nodash = bare.replace("-", "")
+  if stem_meanings:
+    m = (
+        stem_meanings.get(sas_stem)
+        or stem_meanings.get(bare)
+        or stem_meanings.get(bare_nodash)
+        or ""
+    )
+    if m:
+      return " ".join(m.replace("<br>", " ").splitlines()).strip()
+  if corpus_meanings is not None:
+    from dict_curation_projects.conversion.babylon.dict_specific.veda import vedic_meanings
+    is_avy = "[अ.]" in tag
+    m = vedic_meanings.format_stem_meaning(corpus_meanings, sas_stem, is_avyaya=is_avy)
+    if m:
+      return " ".join(m.replace("<br>", " ").splitlines()).strip()
+  return ""
+
+
+def _resolve_dhatu_brief(
+    dhatu: str,
+    attested_forms: Iterable[str],
+    *,
+    dhatu_meanings: dict[str, str] | None = None,
+    corpus_meanings=None,
+) -> str:
+  """Resolve a brief single-line meaning for a dhātu entry from its attested verb forms."""
+  bare_dh = _strip_all_accents(dhatu).replace("ँ", "ं")
+  if dhatu_meanings:
+    m = dhatu_meanings.get(dhatu) or dhatu_meanings.get(bare_dh) or ""
+    if m:
+      return " ".join(m.replace("<br>", " ").splitlines()).strip()
+  if corpus_meanings is not None:
+    from dict_curation_projects.conversion.babylon.dict_specific.veda import vedic_meanings
+    m = vedic_meanings.format_dhatu_meaning(corpus_meanings, attested_forms)
+    if m:
+      return " ".join(m.replace("<br>", " ").splitlines()).strip()
+  return ""
+
+
 def generate_prakrti_definitions(
     raw_entries: Sequence[tuple[str, int, tuple[str, ...]]],
     *,
@@ -1253,6 +1315,9 @@ def generate_prakrti_definitions(
     vedaweb_prior: dict[str, VedawebEntry] | None = None,
     resolver: MorphResolver | None = None,
     max_citations: int | None = 40,
+    stem_meanings: dict[str, str] | None = None,
+    dhatu_meanings: dict[str, str] | None = None,
+    corpus_meanings=None,
 ) -> tuple[list[Definition], list[Definition], dict[str, int]]:
   """Convert normalized padasvara entries into Devanagari and OPTITRANS Babylon ``Definition`` lists."""
   normalized: list[tuple[NormalizedPada, int, tuple[str, ...]]] = []
@@ -1399,7 +1464,20 @@ def generate_prakrti_definitions(
     hws_final = build_stem_headwords(canonical_bare, extras, include_optitrans=True)
 
     for sas_stem, freq, tag, loci_str in emitted:
-      meaning = f"{sas_stem}{tag} ({freq})<br>{loci_str}" if loci_str else f"{sas_stem}{tag} ({freq})"
+      brief = _resolve_stem_brief(
+          sas_stem,
+          tag,
+          stem_meanings=stem_meanings,
+          corpus_meanings=corpus_meanings,
+      )
+      if brief and loci_str:
+        meaning = f"{sas_stem}{tag} ({freq})<br>{brief}<br>{loci_str}"
+      elif brief:
+        meaning = f"{sas_stem}{tag} ({freq})<br>{brief}"
+      elif loci_str:
+        meaning = f"{sas_stem}{tag} ({freq})<br>{loci_str}"
+      else:
+        meaning = f"{sas_stem}{tag} ({freq})"
       defs_dev.append(Definition(headwords_tuple=hws_dev, meaning=meaning))
       defs_final.append(Definition(headwords_tuple=hws_final, meaning=meaning))
 
@@ -1415,7 +1493,16 @@ def generate_prakrti_definitions(
     total_freq = sum(c for _, c in combined)
     forms_str = " · ".join(f"{form} ({cnt})" for form, cnt in combined)
     loci_str = _format_citations(dhatu_loci[dhatu], max_citations)
-    meaning = f"{dhatu} [धातुः] ({total_freq})<br>{forms_str}"
+    dh_brief = _resolve_dhatu_brief(
+        dhatu,
+        (form for form, _ in combined),
+        dhatu_meanings=dhatu_meanings,
+        corpus_meanings=corpus_meanings,
+    )
+    if dh_brief:
+      meaning = f"{dhatu} [धातुः] ({total_freq})<br>{dh_brief}<br>{forms_str}"
+    else:
+      meaning = f"{dhatu} [धातुः] ({total_freq})<br>{forms_str}"
     if loci_str:
       meaning += f"<br>{loci_str}"
 
@@ -1445,14 +1532,28 @@ def build_single_prakrti_svara(
     mirror_roots: Sequence[str] = DEFAULT_MIRROR_ROOTS,
     vedaweb_prior: dict[str, VedawebEntry] | None = None,
     write_final: bool = False,
+    include_meanings: bool = True,
+    corpus_source_dir: str | None = None,
 ) -> dict[str, int]:
   """Build one prakṛti-svara dictionary (``.babylon`` and ``README.md``) across mirror dirs."""
   src_bab = os.path.join(primary_root, spec.source_name, f"{spec.source_name}.babylon")
   raw_entries = load_padasvara_entries(src_bab)
+  corpus_meanings = None
+  is_default_dict_root = os.path.abspath(primary_root) == os.path.abspath(PRIMARY_KAVYA_ROOT)
+  if include_meanings and (corpus_source_dir is not None or is_default_dict_root):
+    from dict_curation_projects.conversion.babylon.dict_specific.veda import vedic_meanings
+    corpus_meanings = vedic_meanings.extract_corpus_meanings(
+        spec.key,
+        raw_forms=[f for f, _, _ in raw_entries],
+        already_us=spec.already_us,
+        source_dir=corpus_source_dir,
+        use_cache=True,
+    )
   defs_dev, defs_final, stats = generate_prakrti_definitions(
       raw_entries,
       already_us=spec.already_us,
       vedaweb_prior=vedaweb_prior,
+      corpus_meanings=corpus_meanings,
   )
 
   headers = {
@@ -1464,6 +1565,7 @@ def build_single_prakrti_svara(
       f"## {spec.dest_name}\n"
       f"- {spec.description}.\n"
       f"- Derived from `{spec.source_name}` using `dict_curation_projects.conversion.babylon.dict_specific.veda.prakrti_svara`.\n"
+      f"- Brief meanings extracted from accompanying translations/commentaries via `vedic_meanings` where attested.\n"
       f"- Nominal prātipadikas and avyayas exclude vocative/sarvānudātta pollution from shifting genuine stem accent.\n"
       f"- Verbal dhātus list attested accented finite/augment forms and corpus frequencies.\n"
   )
@@ -1488,6 +1590,7 @@ def build_all_prakrti_svara(
     *,
     primary_root: str = PRIMARY_KAVYA_ROOT,
     mirror_roots: Sequence[str] = DEFAULT_MIRROR_ROOTS,
+    include_meanings: bool = True,
 ) -> dict[str, dict[str, int]]:
   """Build all selected Vedic prakṛti-svara dictionaries sharing the Vedaweb prior cache."""
   vedaweb_prior = load_vedaweb_prior(VEDAWEB_RK_DIR)
@@ -1501,6 +1604,7 @@ def build_all_prakrti_svara(
         primary_root=primary_root,
         mirror_roots=mirror_roots,
         vedaweb_prior=vedaweb_prior,
+        include_meanings=include_meanings,
     )
     all_stats[spec.dest_name] = st
     print(f"{spec.dest_name}: {st}")

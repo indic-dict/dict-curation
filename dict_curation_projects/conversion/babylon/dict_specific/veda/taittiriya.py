@@ -604,8 +604,17 @@ def collect_ts_padasvara(
   return counts, loci, extra_headwords
 
 
-def dump_all(dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS) -> None:
+def dump_all(dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS, *, include_meanings: bool = True) -> None:
+  from . import vedic_meanings
+
   counts, loci, extra_headwords = collect_ts_padasvara()
+  meanings = (
+      vedic_meanings.build_meaning_lookup_map(
+          "ts", counts, already_us=True, use_cache=True
+      )
+      if include_meanings
+      else None
+  )
   for dest_dir in dest_dirs:
     if os.path.isdir(os.path.dirname(dest_dir)):
       dump_padasvara_babylon(
@@ -615,6 +624,7 @@ def dump_all(dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS) -> None:
           write_final=False,
           citation_sep=", ",
           extra_headwords=extra_headwords,
+          meanings=meanings,
       )
 
 

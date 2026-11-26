@@ -593,6 +593,7 @@ def dump_padasvara_babylon(
     citation_sep: str = ", ",
     max_citations: int | None = None,
     extra_headwords: dict[str, set[str] | list[str] | tuple[str, ...]] | None = None,
+    meanings: dict[str, str] | None = None,
 ) -> tuple[str, str | None]:
   """Write ``<name>.babylon`` (and optionally ``<name>.babylon_final``) with frequencies.
 
@@ -627,7 +628,16 @@ def dump_padasvara_babylon(
         shown = citation_sep.join(word_loci[:max_citations]) + f"{citation_sep}… (+{len(word_loci) - max_citations})"
       else:
         shown = citation_sep.join(word_loci)
-      if shown:
+      brief = ""
+      if meanings:
+        raw_brief = meanings.get(sasvara_word, "")
+        if raw_brief:
+          brief = " ".join(raw_brief.replace("<br>", " ").splitlines()).strip()
+      if brief and shown:
+        meaning = f"{sasvara_word} ({freq})<br>{brief}<br>{shown}"
+      elif brief:
+        meaning = f"{sasvara_word} ({freq})<br>{brief}"
+      elif shown:
         meaning = f"{sasvara_word} ({freq})<br>{shown}"
       else:
         meaning = f"{sasvara_word} ({freq})"

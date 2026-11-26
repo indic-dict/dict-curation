@@ -92,7 +92,7 @@ def dump_babylon(dest_dir: str, counts: Counter | None = None, sasvara_word_dict
   babylon.dump(dest_path=file_path, definitions=definitions, headers=headers)
 
 
-def dump_all(dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS) -> None:
+def dump_all(dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS, *, include_meanings: bool = True) -> None:
   import logging
 
   from .padasvara_common import (
@@ -101,15 +101,24 @@ def dump_all(dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS) -> None:
       dump_padasvara_babylon,
   )
   from .taittiriya import _join_compound_sandhi
+  from . import vedic_meanings
 
   raw_counts, raw_loci = get_dict(dir_path=BASE_DIR)
   counts, loci, fallback_count = convert_counts_and_loci_to_us(raw_counts, raw_loci, already_us=False)
   extra_headwords = build_compound_extra_headwords(counts.keys(), _join_compound_sandhi)
+  meanings = (
+      vedic_meanings.build_meaning_lookup_map(
+          "av", counts, already_us=True, source_dir=BASE_DIR, use_cache=True
+      )
+      if include_meanings
+      else None
+  )
   logging.info(
-      "Converted AV padasvara to US notation (%d unique padas, %d fallbacks, %d extra headwords)",
+      "Converted AV padasvara to US notation (%d unique padas, %d fallbacks, %d extra headwords, %d meanings)",
       len(counts),
       fallback_count,
       len(extra_headwords),
+      len(meanings or {}),
   )
   readme_text = (
       "## av-padasvara\n"
@@ -125,6 +134,7 @@ def dump_all(dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS) -> None:
           write_final=False,
           citation_sep=", ",
           extra_headwords=extra_headwords,
+          meanings=meanings,
       )
       readme_path = os.path.join(dest_dir, "README.md")
       if not os.path.exists(readme_path):

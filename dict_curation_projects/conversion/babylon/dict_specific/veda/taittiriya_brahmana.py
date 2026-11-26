@@ -188,9 +188,19 @@ def _dump_corpus(
     dict_name: str,
     corpus: str,
     title_desc: str,
+    include_meanings: bool = True,
 ) -> tuple[Counter[str], int]:
+  from . import vedic_meanings
+
   counts, loci, skipped = collect_taittiriya_padasvara(source_dir=source_dir, corpus=corpus)
   extra_headwords = build_compound_extra_headwords(counts.keys(), taittiriya._join_compound_sandhi)
+  meanings = (
+      vedic_meanings.build_meaning_lookup_map(
+          corpus.lower(), counts, already_us=True, source_dir=source_dir, use_cache=True
+      )
+      if include_meanings
+      else None
+  )
   readme_text = (
       f"## {dict_name}\n"
       f"- {title_desc} (US accent notation).\n"
@@ -207,6 +217,7 @@ def _dump_corpus(
           write_final=False,
           citation_sep=", ",
           extra_headwords=extra_headwords,
+          meanings=meanings,
       )
       Path(os.path.join(dest_dir, "README.md")).write_text(readme_text, encoding="utf-8")
   return counts, skipped

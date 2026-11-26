@@ -320,17 +320,31 @@ def _write_readme(dest_dir: str, dict_name: str, recension_desc: str, summary_la
   Path(os.path.join(dest_dir, "README.md")).write_text(readme_text, encoding="utf-8")
 
 
-def dump_all(dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS, source_dir: str = SOURCE_DIR) -> None:
+def dump_all(
+    dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS,
+    source_dir: str = SOURCE_DIR,
+    *,
+    include_meanings: bool = True,
+) -> None:
   from .taittiriya import _join_compound_sandhi
+  from . import vedic_meanings
 
   raw_counts, raw_loci = collect_padas(source_dir=source_dir)
   counts, loci, fallback_count = convert_counts_and_loci_to_us(raw_counts, raw_loci, already_us=False)
   extra_headwords = build_compound_extra_headwords(counts.keys(), _join_compound_sandhi)
+  meanings = (
+      vedic_meanings.build_meaning_lookup_map(
+          "vs-m", counts, already_us=True, source_dir=source_dir, use_cache=True
+      )
+      if include_meanings
+      else None
+  )
   logging.info(
-      "Converted VS-M padasvara to US notation (%d unique padas, %d fallbacks, %d extra headwords)",
+      "Converted VS-M padasvara to US notation (%d unique padas, %d fallbacks, %d extra headwords, %d meanings)",
       len(counts),
       fallback_count,
       len(extra_headwords),
+      len(meanings or {}),
   )
   for dest_dir in dest_dirs:
     if os.path.isdir(os.path.dirname(dest_dir)):
@@ -341,6 +355,7 @@ def dump_all(dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS, source_dir: str = S
           write_final=False,
           citation_sep=", ",
           extra_headwords=extra_headwords,
+          meanings=meanings,
       )
       _write_readme(
           dest_dir,
@@ -355,18 +370,28 @@ def dump_kanva(
     source_dir: str = KANVA_SOURCE_DIR,
     *,
     vishvasa_root: str = VISHVASA_ROOT,
+    include_meanings: bool = True,
 ) -> None:
   """Write ``syv-vs-k-padasvara`` ``.babylon`` and ``README.md``."""
   from .taittiriya import _join_compound_sandhi
+  from . import vedic_meanings
 
   raw_counts, raw_loci = collect_kanva_padas(source_dir=source_dir, vishvasa_root=vishvasa_root)
   counts, loci, fallback_count = convert_counts_and_loci_to_us(raw_counts, raw_loci, already_us=False)
   extra_headwords = build_compound_extra_headwords(counts.keys(), _join_compound_sandhi)
+  meanings = (
+      vedic_meanings.build_meaning_lookup_map(
+          "vs-k", counts, already_us=True, source_dir=source_dir, use_cache=True
+      )
+      if include_meanings
+      else None
+  )
   logging.info(
-      "Converted VS-K padasvara to US notation (%d unique padas, %d fallbacks, %d extra headwords)",
+      "Converted VS-K padasvara to US notation (%d unique padas, %d fallbacks, %d extra headwords, %d meanings)",
       len(counts),
       fallback_count,
       len(extra_headwords),
+      len(meanings or {}),
   )
   for dest_dir in dest_dirs:
     if os.path.isdir(os.path.dirname(dest_dir)):
@@ -377,6 +402,7 @@ def dump_kanva(
           write_final=False,
           citation_sep=", ",
           extra_headwords=extra_headwords,
+          meanings=meanings,
       )
       _write_readme(
           dest_dir,

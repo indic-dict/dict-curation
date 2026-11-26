@@ -145,8 +145,9 @@ def collect_rv_padasvara(base_dir: str = BASE_DIR) -> tuple[Counter, dict[str, l
   return counts, loci
 
 
-def dump_all(dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS) -> None:
+def dump_all(dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS, *, include_meanings: bool = True) -> None:
   from .taittiriya import _join_compound_sandhi
+  from . import vedic_meanings
 
   raw_counts, raw_loci = collect_rv_padasvara()
   counts, loci, fallback_count = convert_counts_and_loci_to_us(raw_counts, raw_loci, already_us=False)
@@ -160,11 +161,19 @@ def dump_all(dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS) -> None:
   if bad_us_svaritas:
     raise ValueError(f"Fake non-jātya svaritas remain in US RV padasvara: {bad_us_svaritas[:10]}")
   extra_headwords = build_compound_extra_headwords(counts.keys(), _join_compound_sandhi)
+  meanings = (
+      vedic_meanings.build_meaning_lookup_map(
+          "rv", counts, already_us=True, source_dir=BASE_DIR, use_cache=True
+      )
+      if include_meanings
+      else None
+  )
   logging.info(
-      "Converted RV padasvara to US notation (%d unique padas, %d fallbacks, %d extra headwords)",
+      "Converted RV padasvara to US notation (%d unique padas, %d fallbacks, %d extra headwords, %d meanings)",
       len(counts),
       fallback_count,
       len(extra_headwords),
+      len(meanings or {}),
   )
   readme_text = (
       "## rv-padasvara-dev\n"
@@ -180,6 +189,7 @@ def dump_all(dest_dirs: tuple[str, ...] = DEFAULT_DEST_DIRS) -> None:
           write_final=False,
           citation_sep=", ",
           extra_headwords=extra_headwords,
+          meanings=meanings,
       )
       readme_path = os.path.join(dest_dir, "README.md")
       if not os.path.exists(readme_path):
