@@ -1,4 +1,4 @@
-"""Tests for US-notation svara conversion across RV, AV, MS, ŚB padapāṭha, and Dhātupāṭha."""
+"""Tests for US-notation svara conversion across RV, AV, VS-M/VS-K, ŚB padapāṭha, and Dhātupāṭha."""
 
 from pathlib import Path
 import pytest
@@ -228,3 +228,147 @@ def test_strip_leftover_iti_gloss_and_compound_sandhi_regressions():
   assert rgveda.strip_rk_iti("स्य॒स्वेति॑ स्यस्व") == "स्यस्व"
   assert rgveda.strip_rk_iti("प्रणी॒तीति॒ प्र-नी॒ती॒") == "प्र-नी॒ती॒"
   assert rgveda.strip_rk_iti("पा॒तु॒ [धा॒तु॒]") == "पा॒तु॒"
+
+
+def test_veda_builders_never_target_readonly_kosha_or_secondary_mirror():
+  from dict_curation_projects.conversion.babylon.dict_specific.veda import (
+      atharva,
+      prakrti_svara,
+      taittiriya_brahmana,
+  )
+
+  all_defaults = (
+      *atharva.DEFAULT_DEST_DIRS,
+      *rgveda.DEFAULT_DEST_DIRS,
+      *taittiriya.DEFAULT_DEST_DIRS,
+      *madhyandina.DEFAULT_DEST_DIRS,
+      *shatapatha.DEFAULT_DEST_DIRS,
+      *shatapatha.KANVA_DEFAULT_DEST_DIRS,
+      *taittiriya_brahmana.TB_DEFAULT_DEST_DIRS,
+      *taittiriya_brahmana.TK_DEFAULT_DEST_DIRS,
+      *prakrti_svara.DEFAULT_MIRROR_ROOTS,
+      prakrti_svara.PRIMARY_KAVYA_ROOT,
+      *dhatupatha_svara.DEFAULT_DHATUPATHA_MIRRORS,
+      dhatupatha_svara.PRIMARY_DHATUPATHA_BABYLON,
+  )
+  for path in all_defaults:
+    assert "raw_etexts/koshaH/indic-dict" not in path, path
+    assert "indic-dict/stardict/" not in path, path
+    assert "/indic-dict/dicts/" in path, path
+
+  with pytest.raises(PermissionError):
+    padasvara_common.assert_writable_dict_dest(
+        "/home/vvasuki/gitland/sanskrit/raw_etexts/koshaH/indic-dict/kAvya/syv-sb-k-pada-svara"
+    )
+
+
+def test_taittiriya_brahmana_and_kathaka_padasvara_dump(tmp_path: Path):
+  from dict_curation_projects.conversion.babylon.dict_specific.veda import taittiriya_brahmana
+
+  tb_src = tmp_path / "tb"
+  tb_f = tb_src / "1" / "1_agnyAdheyAdi" / "01_shukra.md"
+  tb_f.parent.mkdir(parents=True)
+  tb_f.write_text(
+      "<details><summary>पद-पाठः (यान्त्रिकः)</summary>\n\n"
+      "ब्र᳓ह्म । स᳓म् । धत्तम् । स᳓म्-भूतम् । अ᳓ग्नेः᳓ ।\n"
+      "</details>\n"
+      '<div class="js_include" url="/vedAH_yajuH/foo.md">\n'
+      "<details><summary>पद-पाठः (यान्त्रिकः)</summary>\n\n"
+      "छाय᳓म् ।\n"
+      "</details>\n"
+      "</div>\n",
+      encoding="utf-8",
+  )
+  tb_dest = tmp_path / "kyv-tb-pada-svara"
+  counts_tb, skipped_tb = taittiriya_brahmana.dump_tb(dest_dirs=(str(tb_dest),), source_dir=str(tb_src))
+  assert skipped_tb == 1  # multi-udātta अ᳓ग्नेः᳓ excluded
+  assert counts_tb == {"ब्र᳓ह्म": 1, "स᳓म्": 1, "धत्तम्": 1, "स᳓म्-भूतम्": 1}
+  bab_tb = (tb_dest / "kyv-tb-pada-svara.babylon").read_text(encoding="utf-8")
+  assert "1.1.1" in bab_tb and "छाय᳓म्" not in bab_tb
+  assert not (tb_dest / "kyv-tb-pada-svara.babylon_final").exists()
+
+  tk_src = tmp_path / "tk"
+  tk_f = tk_src / "1" / "01_1.md"
+  tk_f.parent.mkdir(parents=True)
+  tk_f.write_text(
+      "<details><summary>पद-पाठः (यान्त्रिकः)</summary>\n\n"
+      "सम्-ज्ञा᳓नम् । वि-ज्ञा᳓नम् ।\n"
+      "</details>\n",
+      encoding="utf-8",
+  )
+  tk_dest = tmp_path / "kyv-tk-pada-svara"
+  counts_tk, skipped_tk = taittiriya_brahmana.dump_tk(dest_dirs=(str(tk_dest),), source_dir=str(tk_src))
+  assert skipped_tk == 0
+  assert counts_tk == {"सम्-ज्ञा᳓नम्": 1, "वि-ज्ञा᳓नम्": 1}
+  bab_tk = (tk_dest / "kyv-tk-pada-svara.babylon").read_text(encoding="utf-8")
+  assert "1.1.1" in bab_tk and "सम्ज्ञानम्" in bab_tk
+
+
+def test_madhyandina_missing_leading_anudatta_compounds_and_chapter_collection(tmp_path: Path):
+  # Regression: Mādhyandina padapāṭha omits `॒` on initial syllables before `ऽ`, which must NOT become dual-udātta!
+  cases = [
+      ("सुऽप्र॒जाः", "सु-प्रजाः᳓"),
+      ("पुष्टि॒ऽवर्ध॑नः", "पुष्टि-व᳓र्धनः"),
+      ("निऽमे॒षाः", "नि-मेषाः᳓"),
+      ("सऽजा॒तानाम्", "स-जाता᳓नाम्"),
+      ("वसु॒ऽधेय॑स्य", "वसु-धे᳓यस्य"),
+      # Genuine dual-accent compounds still retain both udāttas!
+      ("बृह॒स्पतिः॑", "बृ᳓हस्प᳓तिः"),
+      ("सो॒मापू॒षऽभ्या॑म्", "सोमा᳓पूष᳓-भ्याम्"),
+  ]
+  for raw_tok, expected_us in cases:
+    np = padasvara_common.normalize_raw_form_to_us(raw_tok, already_us=False)
+    assert np is not None and np.us_form == expected_us, f"{raw_tok!r} -> {np}"
+
+  # Chapter-level `sarva-prastutiH/03.md` collection across multiple clause blocks
+  ch_dir = tmp_path / "sarva-prastutiH"
+  ch_dir.mkdir()
+  (ch_dir / "03.md").write_text(
+      "+++\ntitle = '०३'\n+++\n\n"
+      "## ४० अयमग्निः\n"
+      "<details><summary>पदपाठः - दयानन्दादि</summary>\n"
+      "पु॒ष्टि॒वर्ध॑न॒ इति॑ पुष्टि॒ऽवर्ध॑नः। ४०।\n"
+      "</details>\n"
+      "<details><summary>पदपाठः - दयानन्दादि</summary>\n"
+      "सु॒प्र॒जा इति॑ सुऽप्र॒जाः।\n"
+      "</details>\n",
+      encoding="utf-8",
+  )
+  raw_counts, raw_loci = madhyandina.collect_padas(source_dir=str(ch_dir))
+  us_counts, us_loci, _ = padasvara_common.convert_counts_and_loci_to_us(raw_counts, raw_loci, already_us=False)
+  assert us_counts == {"पुष्टि-व᳓र्धनः": 1, "सु-प्रजाः᳓": 1}
+  assert us_loci["पुष्टि-व᳓र्धनः"] == ["3.40"]
+  assert us_loci["सु-प्रजाः᳓"] == ["3.40"]
+
+  # VS-K collection resolves exact js_includes (पदपाठः - दयानन्दादि fallback) and accented पदपाठः - काण्वः
+  v_root = tmp_path / "vishvasa"
+  shared_yaj = v_root / "vedAH_yajuH" / "static" / "vAjasaneyam" / "mAdhyandinam" / "saMhitA" / "yajuH" / "sarva-prastutiH" / "01" / "01_barhiH.md"
+  shared_yaj.parent.mkdir(parents=True)
+  shared_yaj.write_text(
+      "<details><summary>सर्वाष् टीकाः</summary>\n"
+      "<details><summary>पदपाठः - दयानन्दादि</summary>\n\n"
+      "दे॒वस्य॑। त्वा॒।\n"
+      "</details>\n</details>\n",
+      encoding="utf-8",
+  )
+  vsk_dir = v_root / "vedAH_yajuH" / "content" / "vAjasaneyam" / "kANvam" / "saMhitA" / "sarva-prastutiH"
+  vsk_dir.mkdir(parents=True)
+  (vsk_dir / "01.md").write_text(
+      "+++\ntitle = '०१'\n+++\n\n"
+      "## ०१ इषे\n"
+      "<details><summary>सर्वाष् टीकाः</summary>\n"
+      "<details><summary>पदपाठः</summary>\n\n"
+      "इ॒षे। त्वा॒।\n"
+      "</details>\n</details>\n"
+      "## ०२ देवस्य\n"
+      '<div class="js_include" url="/vedAH_yajuH/vAjasaneyam/mAdhyandinam/saMhitA/yajuH/sarva-prastutiH/01/01_barhiH.md"></div>\n',
+      encoding="utf-8",
+  )
+  dest_k = tmp_path / "syv-vs-k-padasvara"
+  madhyandina.dump_kanva(dest_dirs=(str(dest_k),), source_dir=str(vsk_dir), vishvasa_root=str(v_root))
+  bab_k = (dest_k / "syv-vs-k-padasvara.babylon").read_text(encoding="utf-8")
+  assert "#bookname=syv-vs-k-padasvara (sa-sa)" in bab_k
+  assert "इषे᳓ (1)<br>1.1" in bab_k and "देव᳓स्य (1)<br>1.2" in bab_k
+
+
+

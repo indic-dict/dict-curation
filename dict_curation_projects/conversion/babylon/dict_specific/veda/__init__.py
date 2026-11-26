@@ -9,6 +9,7 @@ from . import (
     rgveda,
     shatapatha,
     taittiriya,
+    taittiriya_brahmana,
 )
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "rgveda",
     "shatapatha",
     "taittiriya",
+    "taittiriya_brahmana",
 ]

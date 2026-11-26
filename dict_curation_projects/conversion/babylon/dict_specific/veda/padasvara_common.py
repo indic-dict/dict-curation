@@ -252,8 +252,28 @@ def _classical_syls_to_marks(
   std = _decode_standard(raw_marks)
   if std is not None:
     n_acc = sum(1 for m in std if m)
-    if n_acc == 1 or (n_acc == 2 and is_dual_accent_candidate(hyph_bare, clean_bare, std)):
+    if n_acc == 1:
       return tuple(std), False
+    if n_acc == 2:
+      # Guard against Mādhyandina-style missing leading `॒` before `L` on non-dual compounds
+      # (`सुऽप्र॒जाः`, `पुष्टि॒ऽवर्ध॑नः`, `वसुऽधे॑यस्य`): when `raw_marks[0] == ""` and no `S`/`LS`
+      # precedes the first `L`, only canonical dual-accent compounds / `-तवै` infinitives keep 2 accents;
+      # all other compounds fall through to Pattern 1 to repair the missing leading `॒`.
+      has_unmarked_before_first_l = (
+          raw_marks[0] == ""
+          and "L" in raw_marks
+          and not any(m in ("S", "LS") for m in raw_marks[:raw_marks.index("L")])
+      )
+      norm_c = clean_bare.replace("ँ", "ं")
+      is_known_dual = (
+          ss._is_dual_accent_word(ss._normalize_lookup_key(norm_c))
+          or any(norm_c.startswith(p) for p in DEVATA_DVANDVA_PREFIXES)
+          or (norm_c.endswith(("तवै", "तवा")) and bool(std[0]) and bool(std[-1]))
+      )
+      if is_known_dual or (
+          not has_unmarked_before_first_l and is_dual_accent_candidate(hyph_bare, clean_bare, std)
+      ):
+        return tuple(std), False
 
   # Pattern 1: Leading unmarked syllable(s) missing ॒ before L (अच॒क्रे, अनू॒ची, एत॒वै, सु॒ऽउक्तस्य॑)
   if "" in raw_marks and raw_marks[0] == "" and "L" in raw_marks:
@@ -549,6 +569,21 @@ def _merge_headwords(
   return tuple(dict.fromkeys(h for h in merged if h))
 
 
+_READONLY_DICT_PATH_MARKERS: tuple[str, ...] = (
+    "raw_etexts/koshaH/indic-dict",
+)
+
+
+def assert_writable_dict_dest(dest_path: str) -> None:
+  """Refuse writes to read-only dictionary mirrors (e.g. ``raw_etexts/koshaH/indic-dict``)."""
+  norm = os.path.realpath(os.path.abspath(dest_path)).replace("\\", "/")
+  for marker in _READONLY_DICT_PATH_MARKERS:
+    if marker in norm or marker in dest_path.replace("\\", "/"):
+      raise PermissionError(
+          f"Refusing to write dictionary output to read-only mirror path: {dest_path}"
+      )
+
+
 def dump_padasvara_babylon(
     counts: dict[str, int],
     loci: dict[str, list[str]],
@@ -564,6 +599,7 @@ def dump_padasvara_babylon(
   Multi-variant headwords are ordered by descending frequency ``(-count, sasvara_word)``
   so the most attested accentuation always appears first.
   """
+  assert_writable_dict_dest(dest_dir)
   visvara_to_sasvara: dict[str, list[str]] = defaultdict(list)
   for sasvara_word in counts:
     visvara_word = regex.sub(fr"{accent.ACCENTS_PATTERN}|[ऽ\-]", "", sasvara_word).strip()

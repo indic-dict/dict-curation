@@ -2,7 +2,7 @@
 
 Derives US-accented (``᳓`` / ``᳙``) nominal prātipadika stems, avyayas,
 and dhātu (verbal) finite-form synopses from existing Vedic padapāṭha
-svara dictionaries (TS, RV, AV, VS Mādhyandina, ŚB Mādhyandina), writing ``.babylon``
+svara dictionaries (TS, RV, AV, VS-M, VS-K, ŚB-M, TB, TK), writing ``.babylon``
 and ``README.md`` outputs into all mirrored kAvya directories.
 """
 
@@ -34,15 +34,14 @@ from .padasvara_common import (
     US_UDATTA,
     _is_devanagari,
     apply_us_marks_to_hyph as _apply_us_marks_to_hyph,
+    assert_writable_dict_dest,
     is_dual_accent_candidate as _is_dual_accent_candidate,
     normalize_raw_form_to_us,
     strip_all_accents as _strip_all_accents,
 )
 
 DEFAULT_MIRROR_ROOTS: tuple[str, ...] = (
-    "/home/vvasuki/gitland/sanskrit/raw_etexts/koshaH/indic-dict/kAvya",
     "/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-kAvya",
-    "/home/vvasuki/gitland/indic-dict/stardict/stardict-sanskrit-kAvya",
 )
 PRIMARY_KAVYA_ROOT = DEFAULT_MIRROR_ROOTS[0]
 VEDAWEB_RK_DIR = "/home/vvasuki/gitland/vishvAsa/vedAH_Rk/static/shAkalam/saMhitA/sarvASh_TIkAH"
@@ -82,11 +81,18 @@ VEDA_SPECS: tuple[VedaDictSpec, ...] = (
         description="Atharvaveda Śaunaka Saṁhitā prakṛti-svara (stems & dhātus, US notation)",
     ),
     VedaDictSpec(
-        key="ms",
-        dest_name="syv-ms-prakRti-svara",
-        source_name="syv-ms-padasvara",
+        key="vs-m",
+        dest_name="syv-vs-m-prakRti-svara",
+        source_name="syv-vs-m-padasvara",
         already_us=True,
         description="Śukla Yajurveda Vājasaneyi Mādhyandina Saṁhitā prakṛti-svara (stems & dhātus, US notation)",
+    ),
+    VedaDictSpec(
+        key="vs-k",
+        dest_name="syv-vs-k-prakRti-svara",
+        source_name="syv-vs-k-padasvara",
+        already_us=True,
+        description="Śukla Yajurveda Vājasaneyi Kāṇva Saṁhitā prakṛti-svara (stems & dhātus, US notation)",
     ),
     VedaDictSpec(
         key="sb",
@@ -94,6 +100,34 @@ VEDA_SPECS: tuple[VedaDictSpec, ...] = (
         source_name="syv-sb-m-pada-svara",
         already_us=True,
         description="Śukla Yajurveda Mādhyandina Śatapatha Brāhmaṇa prakṛti-svara (stems & dhātus, US notation)",
+    ),
+    VedaDictSpec(
+        key="tb",
+        dest_name="kyv-tb-prakRti-svara",
+        source_name="kyv-tb-pada-svara",
+        already_us=True,
+        description="Kṛṣṇa Yajurveda Taittirīya Brāhmaṇa prakṛti-svara (stems & dhātus, US notation)",
+    ),
+    VedaDictSpec(
+        key="tk",
+        dest_name="kyv-tk-prakRti-svara",
+        source_name="kyv-tk-pada-svara",
+        already_us=True,
+        description="Kṛṣṇa Yajurveda Taittirīya Kāṭhaka prakṛti-svara (stems & dhātus, US notation)",
+    ),
+    VedaDictSpec(
+        key="ms",
+        dest_name="kyv-ms-prakRti-svara",
+        source_name="kyv-ms-pada-svara",
+        already_us=True,
+        description="Kṛṣṇa Yajurveda Maitrāyaṇī Saṁhitā prakṛti-svara (stems & dhātus, US notation)",
+    ),
+    VedaDictSpec(
+        key="ks",
+        dest_name="kyv-ks-prakRti-svara",
+        source_name="kyv-ks-pada-svara",
+        already_us=True,
+        description="Kṛṣṇa Yajurveda Kāṭhaka Saṁhitā prakṛti-svara (stems & dhātus, US notation)",
     ),
 )
 
@@ -1436,6 +1470,7 @@ def build_single_prakrti_svara(
 
   for root in mirror_roots:
     dest_dir = os.path.join(root, spec.dest_name)
+    assert_writable_dict_dest(dest_dir)
     os.makedirs(dest_dir, exist_ok=True)
     bab_path = os.path.join(dest_dir, f"{spec.dest_name}.babylon")
     babylon.dump(dest_path=bab_path, definitions=defs_dev, headers=dict(headers))

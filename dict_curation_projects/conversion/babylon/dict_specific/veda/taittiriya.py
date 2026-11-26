@@ -14,9 +14,7 @@ from .padasvara_common import dump_padasvara_babylon
 
 PADA_BASE_DIR = "/home/vvasuki/gitland/sanskrit/raw_etexts_private/vedaH/taittirIyA/padapAThaH/saMhitA"
 DEFAULT_DEST_DIRS = (
-    "/home/vvasuki/gitland/sanskrit/raw_etexts/koshaH/indic-dict/kAvya/kyv-ts-padasvara",
     "/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-kAvya/kyv-ts-padasvara",
-    "/home/vvasuki/gitland/indic-dict/stardict/stardict-sanskrit-kAvya/kyv-ts-padasvara",
 )
 
 _UDATTA = "\u1cd3"

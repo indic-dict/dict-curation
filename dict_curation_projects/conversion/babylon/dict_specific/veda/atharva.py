@@ -16,9 +16,7 @@ from .padasvara_common import build_visvara_headwords
 
 BASE_DIR = "/home/vvasuki/gitland/vishvAsa/vedAH/static/atharva/shaunakam/rUDha-saMhitA/sarvASh_TIkAH"
 DEFAULT_DEST_DIRS = (
-    "/home/vvasuki/gitland/sanskrit/raw_etexts/koshaH/indic-dict/kAvya/av-padasvara",
     "/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-kAvya/av-padasvara",
-    "/home/vvasuki/gitland/indic-dict/stardict/stardict-sanskrit-kAvya/av-padasvara",
 )
 
 _PP_RE = regex.compile(r"<details><summary>पद-?पाठः</summary>\s*(.*?)\s*</details>", regex.S)

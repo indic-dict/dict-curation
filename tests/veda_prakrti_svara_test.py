@@ -175,6 +175,13 @@ def test_sb_spec_and_four_part_loci():
   assert sb_spec.source_name == "syv-sb-m-pada-svara"
   assert sb_spec.already_us is True
 
+  vsm_spec = next(s for s in prakrti_svara.VEDA_SPECS if s.key == "vs-m")
+  vsk_spec = next(s for s in prakrti_svara.VEDA_SPECS if s.key == "vs-k")
+  assert vsm_spec.dest_name == "syv-vs-m-prakRti-svara"
+  assert vsm_spec.source_name == "syv-vs-m-padasvara"
+  assert vsk_spec.dest_name == "syv-vs-k-prakRti-svara"
+  assert vsk_spec.source_name == "syv-vs-k-padasvara"
+
   sb_raw = [("अग्निः᳓", 12, ("1.3.3.19", "1.3.4.4"))]
   sb_defs, _, _ = prakrti_svara.generate_prakrti_definitions(sb_raw, already_us=True)
   assert any("अग्नि" in d.headwords_tuple and d.meaning.startswith("अग्नि᳓ (12)<br>1.3.3.19, 1.3.4.4") for d in sb_defs)

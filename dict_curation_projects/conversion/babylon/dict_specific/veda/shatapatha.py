@@ -27,18 +27,14 @@ SOURCE_DIR = (
     "mAdhyandinam/shatapatha-brAhmaNam/sarva-prastutiH"
 )
 DEFAULT_DEST_DIRS = (
-    "/home/vvasuki/gitland/sanskrit/raw_etexts/koshaH/indic-dict/kAvya/syv-sb-m-pada-svara",
     "/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-kAvya/syv-sb-m-pada-svara",
-    "/home/vvasuki/gitland/indic-dict/stardict/stardict-sanskrit-kAvya/syv-sb-m-pada-svara",
 )
 KANVA_SOURCE_DIR = (
     "/home/vvasuki/gitland/vishvAsa/vedAH_yajuH/content/vAjasaneyam/"
     "kANvam/shatapatha-brAhmaNam/sarva-prastutiH"
 )
 KANVA_DEFAULT_DEST_DIRS = (
-    "/home/vvasuki/gitland/sanskrit/raw_etexts/koshaH/indic-dict/kAvya/syv-sb-k-pada-svara",
     "/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-kAvya/syv-sb-k-pada-svara",
-    "/home/vvasuki/gitland/indic-dict/stardict/stardict-sanskrit-kAvya/syv-sb-k-pada-svara",
 )
 
 _SECTION_SPLIT_RE = re.compile(r"(?m)^##\s+([^\n]+)\n")

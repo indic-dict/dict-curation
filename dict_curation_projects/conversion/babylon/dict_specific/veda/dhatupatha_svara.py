@@ -10,16 +10,19 @@ import re
 from doc_curation.sanskrit.accent import shatapatha_solver as ss
 import regex
 
-from .padasvara_common import ENCLITIC_PARTICLES, apply_us_marks_to_hyph, strip_all_accents
+from .padasvara_common import (
+    ENCLITIC_PARTICLES,
+    apply_us_marks_to_hyph,
+    assert_writable_dict_dest,
+    strip_all_accents,
+)
 
 PRIMARY_DHATUPATHA_BABYLON = (
-    "/home/vvasuki/gitland/sanskrit/raw_etexts/koshaH/indic-dict/"
-    "vyAkaraNa/dhAtu/dhAtupAThaH_sasvaraH/dhAtupAThaH_sasvaraH.babylon"
+    "/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/"
+    "dhAtu/dhAtupAThaH_sasvaraH/dhAtupAThaH_sasvaraH.babylon"
 )
 DEFAULT_DHATUPATHA_MIRRORS = (
-    "/home/vvasuki/gitland/sanskrit/raw_etexts/koshaH/indic-dict/vyAkaraNa/dhAtu/dhAtupAThaH_sasvaraH",
     "/home/vvasuki/gitland/indic-dict/dicts/stardict-sanskrit-vyAkaraNa/dhAtu/dhAtupAThaH_sasvaraH",
-    "/home/vvasuki/gitland/indic-dict/stardict/stardict-sanskrit-vyAkaraNa/dhAtu/dhAtupAThaH_sasvaraH",
 )
 
 _CL_SVARITA = "\u0951"
@@ -235,6 +238,7 @@ def convert_dhatupatha_babylon_to_us(
     out_text = out_text.rstrip("\n") + "\n\n"
 
   for d in mirror_dirs:
+    assert_writable_dict_dest(d)
     os.makedirs(d, exist_ok=True)
     out_path = os.path.join(d, "dhAtupAThaH_sasvaraH.babylon")
     Path(out_path).write_text(out_text, encoding="utf-8")
