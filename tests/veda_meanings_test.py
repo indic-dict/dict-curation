@@ -332,3 +332,107 @@ def test_validate_veda_babylon_schema_and_citations(tmp_path):
     assert res["bad_format"] == 0, f"{name}: {res}"
     assert res["uncited"] == 0, f"{name}: {res}"
     assert res["final_files"] == 0, f"{name}: {res}"
+
+
+def _build_minimal_dictzip(payload: bytes, chlen: int = 58315) -> bytes:
+  """Compress ``payload`` as a valid single-or-multi-chunk DICTZIP archive."""
+  import struct
+  import zlib
+
+  chunks: list[bytes] = []
+  for pos in range(0, len(payload), chlen):
+    comp = zlib.compressobj(level=9, wbits=-zlib.MAX_WBITS)
+    chunk_bytes = comp.compress(payload[pos : pos + chlen]) + comp.flush(zlib.Z_SYNC_FLUSH)
+    chunks.append(chunk_bytes)
+  # Append final empty deflate block so standard gzip readers see clean EOF.
+  fin = zlib.compressobj(level=9, wbits=-zlib.MAX_WBITS).flush(zlib.Z_FINISH)
+  if chunks:
+    chunks[-1] += fin
+  ra = b"RA" + struct.pack("<HHHH", 6 + 2 * len(chunks), 1, chlen, len(chunks)) + struct.pack(
+      f"<{len(chunks)}H", *[len(c) for c in chunks]
+  )
+  hdr = struct.pack("<BBBBIBBH", 0x1F, 0x8B, 8, 4, 0, 2, 3, len(ra)) + ra
+  crc = zlib.crc32(payload) & 0xFFFFFFFF
+  trailer = struct.pack("<II", crc, len(payload) & 0xFFFFFFFF)
+  return hdr + b"".join(chunks) + trailer
+
+
+def test_validate_stardict_dictzip(tmp_path):
+  import struct
+  from pathlib import Path
+  import pytest
+
+  d = tmp_path / "sample-svara"
+  d.mkdir()
+  entry_a = "अग्निः (1)<br>fire (Griffith 1.1)<br>1.1".encode("utf-8")
+  entry_b = "सोमः (1)<br>soma (Griffith 1.2)<br>1.2".encode("utf-8")
+  payload = entry_a + entry_b
+  idx = (
+      b"agni\x00" + struct.pack(">II", 0, len(entry_a))
+      + b"soma\x00" + struct.pack(">II", len(entry_a), len(entry_b))
+  )
+  (d / "sample-svara.idx").write_bytes(idx)
+  (d / "sample-svara.dict.dz").write_bytes(_build_minimal_dictzip(payload))
+  (d / "sample-svara.ifo").write_text(
+      f"StarDict's dict ifo file\nversion=2.4.2\nwordcount=2\nidxfilesize={len(idx)}\nbookname=sample\n",
+      encoding="utf-8",
+  )
+
+  stats = padasvara_common.validate_stardict_dictzip(d)
+  assert stats["wordcount"] == 2
+  assert stats["idx_entries"] == 2
+  assert stats["bad_chunks"] == 0
+  assert stats["bad_entries"] == 0
+
+  # Corrupt payload chunk and confirm validator detects it cleanly.
+  dz_bytes = bytearray((d / "sample-svara.dict.dz").read_bytes())
+  dz_bytes[-12] ^= 0xFF
+  (d / "sample-svara.dict.dz").write_bytes(bytes(dz_bytes))
+  bad = padasvara_common.validate_stardict_dictzip(d)
+  assert bad["bad_chunks"] > 0 or bad["bad_entries"] > 0
+
+  installed_root = Path("/media/vvasuki/vData/dicts/stardict/indic-dict/stardict-sanskrit-kAvya")
+  if not installed_root.is_dir():
+    pytest.skip("Local installed StarDict kAvya directory not present")
+  for name in padasvara_common.VEDA_SVARA_DICT_NAMES:
+    res = padasvara_common.validate_stardict_dictzip(installed_root / name)
+    assert res["idx_entries"] > 0, name
+    assert res["bad_chunks"] == 0, f"{name}: {res}"
+    assert res["bad_entries"] == 0, f"{name}: {res}"
+
+
+def test_build_single_prakrti_svara_loads_vedaweb_prior_by_default(tmp_path, monkeypatch):
+  src_root = tmp_path / "dicts"
+  src_dir = src_root / "kyv-mini-padasvara"
+  src_dir.mkdir(parents=True)
+  (src_dir / "kyv-mini-padasvara.babylon").write_text(
+      "#bookname=kyv-mini-padasvara (sa-sa)\n\nअग्निः\nअग्नि᳓ः (1)<br>1.1\n\n",
+      encoding="utf-8",
+  )
+  rk_dir = tmp_path / "vedaweb_rk"
+  rk_dir.mkdir()
+  called = {"count": 0}
+
+  def fake_loader(path):
+    called["count"] += 1
+    assert path == str(rk_dir)
+    return {}
+
+  monkeypatch.setattr(prakrti_svara, "VEDAWEB_RK_DIR", str(rk_dir))
+  monkeypatch.setattr(prakrti_svara, "load_vedaweb_prior", fake_loader)
+
+  spec = prakrti_svara.VedaDictSpec(
+      key="mini",
+      dest_name="kyv-mini-prakRti-svara",
+      source_name="kyv-mini-padasvara",
+      already_us=True,
+      description="mini",
+  )
+  prakrti_svara.build_single_prakrti_svara(
+      spec,
+      primary_root=str(src_root),
+      mirror_roots=(str(src_root),),
+      include_meanings=False,
+  )
+  assert called["count"] == 1
+  assert (src_root / "kyv-mini-prakRti-svara" / "kyv-mini-prakRti-svara.babylon").is_file()

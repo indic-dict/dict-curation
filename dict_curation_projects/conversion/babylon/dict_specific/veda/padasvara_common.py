@@ -8,7 +8,9 @@ import logging
 import os
 from pathlib import Path
 import re
+import struct
 from typing import Callable, Iterable, Sequence
+import zlib
 
 from dict_curation import Definition, babylon
 from doc_curation.sanskrit.accent import shatapatha_solver as ss
@@ -747,3 +749,126 @@ def validate_veda_babylon_dir(dict_dir: str | os.PathLike[str]) -> dict[str, int
   stats = validate_veda_babylon_text(bab_path.read_text(encoding="utf-8"))
   stats["final_files"] = len(list(dpath.glob("*.babylon_final")))
   return stats
+
+
+def _parse_dictzip_chunks(raw: bytes) -> tuple[int, list[tuple[int, int]]]:
+  """Parse a DICTZIP header and return ``(chunk_length, [(offset, size), ...])``."""
+  if len(raw) < 12 or raw[0] != 0x1F or raw[1] != 0x8B or raw[2] != 8:
+    raise ValueError("Invalid gzip/dictzip header")
+  flg = raw[3]
+  if not (flg & 4):
+    raise ValueError("Missing FEXTRA flag in dictzip header")
+  xlen = struct.unpack("<H", raw[10:12])[0]
+  ext = raw[12 : 12 + xlen]
+  pos = 0
+  chlen = 0
+  chunks: tuple[int, ...] = ()
+  while pos + 4 <= len(ext):
+    si1, si2, slen = struct.unpack("<BBH", ext[pos : pos + 4])
+    sub = ext[pos + 4 : pos + 4 + slen]
+    pos += 4 + slen
+    if si1 == ord("R") and si2 == ord("A"):
+      if len(sub) < 6:
+        raise ValueError("Truncated RA subfield in dictzip header")
+      ver, chlen, chcnt = struct.unpack("<HHH", sub[:6])
+      if ver != 1 or chlen <= 0 or len(sub) < 6 + 2 * chcnt:
+        raise ValueError(f"Unsupported/corrupt RA header: ver={ver}, chlen={chlen}")
+      chunks = struct.unpack(f"<{chcnt}H", sub[6 : 6 + 2 * chcnt])
+      break
+  if not chunks:
+    raise ValueError("Missing RA chunk table in dictzip header")
+  data_start = 12 + xlen
+  if flg & 8:
+    data_start = raw.index(b"\x00", data_start) + 1
+  if flg & 16:
+    data_start = raw.index(b"\x00", data_start) + 1
+  if flg & 2:
+    data_start += 2
+  offsets: list[tuple[int, int]] = []
+  co = data_start
+  for cl in chunks:
+    offsets.append((co, cl))
+    co += cl
+  if co > len(raw):
+    raise ValueError(f"Truncated dictzip payload: expected >= {co}, got {len(raw)}")
+  return chlen, offsets
+
+
+def validate_stardict_dictzip(dict_dir: str | os.PathLike[str]) -> dict[str, int]:
+  """Verify StarDict ``.ifo``, ``.idx``, and random-access DICTZIP ``.dict.dz`` integrity."""
+  dpath = Path(dict_dir)
+  ifo_path = dpath / f"{dpath.name}.ifo"
+  if not ifo_path.is_file():
+    ifo_path = next(dpath.glob("*.ifo"), ifo_path)
+  if not ifo_path.is_file():
+    raise FileNotFoundError(f"Missing .ifo file in {dpath}")
+  stem = ifo_path.stem
+  idx_path = dpath / f"{stem}.idx"
+  dz_path = dpath / f"{stem}.dict.dz"
+  if not idx_path.is_file() or not dz_path.is_file():
+    raise FileNotFoundError(f"Missing .idx or .dict.dz for {stem} in {dpath}")
+
+  ifo_meta: dict[str, str] = {}
+  for line in ifo_path.read_text(encoding="utf-8").splitlines():
+    if "=" in line:
+      k, v = line.split("=", 1)
+      ifo_meta[k.strip()] = v.strip()
+  wordcount = int(ifo_meta.get("wordcount", "0"))
+  idxfilesize = int(ifo_meta.get("idxfilesize", "0"))
+
+  raw = dz_path.read_bytes()
+  chlen, offsets = _parse_dictzip_chunks(raw)
+  dec_chunks: list[bytes | None] = []
+  bad_chunks = 0
+  for i, (co, cl) in enumerate(offsets):
+    try:
+      out = zlib.decompressobj(-zlib.MAX_WBITS).decompress(raw[co : co + cl])
+      if i < len(offsets) - 1 and len(out) != chlen:
+        dec_chunks.append(None)
+        bad_chunks += 1
+      else:
+        dec_chunks.append(out)
+    except zlib.error:
+      dec_chunks.append(None)
+      bad_chunks += 1
+
+  idx_bytes = idx_path.read_bytes()
+  if idxfilesize and len(idx_bytes) != idxfilesize:
+    raise ValueError(f"idx size mismatch for {stem}: expected {idxfilesize}, got {len(idx_bytes)}")
+
+  pos = 0
+  idx_entries = 0
+  bad_entries = 0
+  while pos < len(idx_bytes):
+    nul = idx_bytes.index(0, pos)
+    if nul + 9 > len(idx_bytes):
+      bad_entries += 1
+      break
+    off, sz = struct.unpack(">II", idx_bytes[nul + 1 : nul + 9])
+    pos = nul + 9
+    idx_entries += 1
+    if sz == 0:
+      bad_entries += 1
+      continue
+    c0, c1 = off // chlen, (off + sz - 1) // chlen
+    if c1 >= len(dec_chunks) or any(dec_chunks[c] is None for c in range(c0, c1 + 1)):
+      bad_entries += 1
+      continue
+    buf = b"".join(dec_chunks[c] for c in range(c0, c1 + 1) if dec_chunks[c] is not None)
+    rel = off - c0 * chlen
+    val = buf[rel : rel + sz]
+    try:
+      if len(val) != sz or not val.decode("utf-8", "strict"):
+        bad_entries += 1
+    except UnicodeDecodeError:
+      bad_entries += 1
+
+  if wordcount and idx_entries != wordcount:
+    bad_entries += abs(idx_entries - wordcount)
+  return {
+      "wordcount": wordcount,
+      "idx_entries": idx_entries,
+      "chunks": len(offsets),
+      "bad_chunks": bad_chunks,
+      "bad_entries": bad_entries,
+  }

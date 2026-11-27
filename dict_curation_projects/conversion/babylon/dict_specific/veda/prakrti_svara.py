@@ -1531,11 +1531,14 @@ def build_single_prakrti_svara(
     primary_root: str = PRIMARY_KAVYA_ROOT,
     mirror_roots: Sequence[str] = DEFAULT_MIRROR_ROOTS,
     vedaweb_prior: dict[str, VedawebEntry] | None = None,
+    use_vedaweb_prior: bool = True,
     write_final: bool = False,
     include_meanings: bool = True,
     corpus_source_dir: str | None = None,
 ) -> dict[str, int]:
   """Build one prakṛti-svara dictionary (``.babylon`` and ``README.md``) across mirror dirs."""
+  if vedaweb_prior is None and use_vedaweb_prior and os.path.isdir(VEDAWEB_RK_DIR):
+    vedaweb_prior = load_vedaweb_prior(VEDAWEB_RK_DIR)
   src_bab = os.path.join(primary_root, spec.source_name, f"{spec.source_name}.babylon")
   raw_entries = load_padasvara_entries(src_bab)
   corpus_meanings = None
